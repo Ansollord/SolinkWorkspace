@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Solink Workspace</title>
+  <style>
+    :root {
+      --bg: #f6f4ef;
+      --panel: #fffdf8;
+      --ink: #171713;
+      --muted: #6f6a5e;
+      --line: #d9d1c2;
+      --accent: #0f7f72;
+      --blue: #275c91;
+      --shadow: 0 10px 30px rgba(35, 29, 18, .08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.45 "Segoe UI", Arial, sans-serif;
+    }
+    a { color: inherit; text-decoration: none; }
+    .shell { min-height: 100vh; display: grid; grid-template-rows: 64px 1fr; }
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 253, 248, .94);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+    .mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: var(--accent);
+      color: white;
+      font-weight: 800;
+    }
+    .title { min-width: 240px; }
+    .title h1 { margin: 0; font-size: 20px; line-height: 1.1; }
+    .title div { margin-top: 3px; color: var(--muted); font-size: 12px; }
+    .search {
+      flex: 1;
+      max-width: 860px;
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0 12px;
+      background: white;
+      font: inherit;
+    }
+    .status-strip {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-left: auto;
+      white-space: nowrap;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+    .layout {
+      display: grid;
+      grid-template-columns: 270px 1fr 320px;
+      min-height: calc(100vh - 64px);
+    }
+    .sidebar, .rightbar {
+      border-right: 1px solid var(--line);
+      background: #fbf8f1;
+      padding: 16px;
+      overflow: auto;
+    }
+    .rightbar { border-right: 0; border-left: 1px solid var(--line); }
+    .main { padding: 18px; overflow: auto; }
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .section-title h2 { margin: 0; font-size: 16px; }
+    .small { color: var(--muted); font-size: 12px; }
+    .nav-list { display: grid; gap: 7px; }
+    .nav-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 9px 10px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      font-weight: 700;
+    }
+    .nav-item.active {
+      background: #dff0ec;
+      border-color: #94c8bf;
+      color: #083f39;
+    }
+    .badge {
+      min-width: 34px;
+      text-align: center;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 1px 6px;
+      background: white;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(260px, 1.2fr) minmax(240px, .8fr);
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .mission, .metric, .project-card {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    .mission { padding: 18px; }
+    .mission h2 { margin: 0 0 8px; font-size: 24px; }
+    .mission p { margin: 0; max-width: 760px; color: #39352d; font-size: 15px; }
+    .telemetry { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .metric { padding: 13px; min-height: 82px; }
+    .metric strong { display: block; font-size: 24px; line-height: 1; margin-bottom: 8px; }
+    .metric span { color: var(--muted); font-size: 12px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+    .project-card { min-height: 220px; display: flex; flex-direction: column; gap: 12px; padding: 14px; }
+    .project-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .project-head h3 { margin: 0; font-size: 18px; line-height: 1.2; }
+    .status {
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .status.ok { background: #dff0ec; color: #0f5f55; }
+    .status.agent { background: #dceafb; color: var(--blue); }
+    .next {
+      border-left: 3px solid var(--accent);
+      padding-left: 10px;
+      color: #312d26;
+      min-height: 52px;
+    }
+    .meta { display: grid; gap: 6px; margin-top: auto; color: var(--muted); font-size: 12px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .button {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: white;
+      padding: 7px 10px;
+      font-weight: 700;
+      color: #302b22;
+    }
+    .button.primary { background: var(--accent); border-color: var(--accent); color: white; }
+    .timeline { display: grid; gap: 10px; }
+    .event { border-left: 3px solid var(--line); padding-left: 10px; color: #403b33; }
+    .event strong { display: block; margin-bottom: 2px; }
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: 220px 1fr; }
+      .rightbar { display: none; }
+      .hero { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 760px) {
+      .topbar { flex-wrap: wrap; height: auto; }
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="mark">SW</div>
+      <div class="title">
+        <h1>Solink Workspace</h1>
+        <div>AI command center · 4 июля 2026</div>
+      </div>
+      <input class="search" type="search" placeholder="Поиск по проектам, задачам и решениям">
+      <div class="status-strip"><span class="dot"></span> Workspace online</div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="section-title">
+          <h2>Проекты</h2>
+          <span class="small">3 активных</span>
+        </div>
+        <nav class="nav-list" aria-label="Проекты">
+          <a class="nav-item active" href="../SolinkWorkspace/projects/SOLINK_WORKSPACE_RU.md"><span>Solink Workspace</span><span class="badge">AI</span></a>
+          <a class="nav-item" href="../SolinkWorkspace/projects/WEBLINKER_BOARD_RU.md"><span>WebLinker Board</span><span class="badge">B</span></a>
+          <a class="nav-item" href="../SolinkWorkspace/projects/WEBLINKER_CATALOG_RU.md"><span>WebLinker Catalog</span><span class="badge">C</span></a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <section class="hero">
+          <div class="mission">
+            <h2>Главный пульт проектов</h2>
+            <p>Здесь собирается оперативная картина: какие проекты живые, где нужен агент, что делать следующим шагом и какие документы читать перед стартом работы.</p>
+          </div>
+          <div class="telemetry">
+            <div class="metric"><strong>3</strong><span>активных проекта</span></div>
+            <div class="metric"><strong>1</strong><span>агент в работе</span></div>
+            <div class="metric"><strong>2</strong><span>направления WebLinker</span></div>
+            <div class="metric"><strong>v0.1</strong><span>файловая память</span></div>
+          </div>
+        </section>
+
+        <div class="section-title">
+          <h2>Активные проекты</h2>
+          <span class="small">Источник: PROJECTS_HUB_RU.md</span>
+        </div>
+
+        <section class="cards">
+          <article class="project-card">
+            <div class="project-head">
+              <h3>Solink Workspace</h3>
+              <span class="status agent">Работает агент</span>
+            </div>
+            <div class="next">Собрать первый HTML Command Center: проекты, статус, momentum, следующий шаг, быстрые ссылки.</div>
+            <div class="meta">
+              <span>Momentum: высокий</span>
+              <span>Папка: C:\Users\solin\Documents\Codex\SolinkWorkspace</span>
+            </div>
+            <div class="actions">
+              <a class="button primary" href="../SolinkWorkspace/projects/SOLINK_WORKSPACE_RU.md">Карточка</a>
+              <a class="button" href="../SolinkWorkspace/MANIFEST_RU.md">Manifest</a>
+              <a class="button" href="../SolinkWorkspace/ROADMAP_RU.md">Roadmap</a>
+            </div>
+          </article>
+
+          <article class="project-card">
+            <div class="project-head">
+              <h3>WebLinker Board</h3>
+              <span class="status ok">Норма</span>
+            </div>
+            <div class="next">Сверить текущую карту проекта и определить место Board в общей среде.</div>
+            <div class="meta">
+              <span>Momentum: средний</span>
+              <span>Папка: C:\Users\solin\Documents\WebLinker</span>
+            </div>
+            <div class="actions">
+              <a class="button primary" href="../SolinkWorkspace/projects/WEBLINKER_BOARD_RU.md">Карточка</a>
+              <a class="button" href="file:///C:/Users/solin/Documents/WebLinker/PROJECT_MAP_RU.md">Карта</a>
+            </div>
+          </article>
+
+          <article class="project-card">
+            <div class="project-head">
+              <h3>WebLinker Catalog</h3>
+              <span class="status ok">Норма</span>
+            </div>
+            <div class="next">Довести стандарт карточки обычного сайта после YouTube-шаблона.</div>
+            <div class="meta">
+              <span>Momentum: высокий</span>
+              <span>Папка: C:\Users\solin\Documents\Codex\web1node</span>
+            </div>
+            <div class="actions">
+              <a class="button primary" href="../SolinkWorkspace/projects/WEBLINKER_CATALOG_RU.md">Карточка</a>
+              <a class="button" href="file:///C:/Users/solin/Documents/Codex/web1node/app/catalog-editor.html">Catalog</a>
+            </div>
+          </article>
+        </section>
+      </main>
+
+      <aside class="rightbar">
+        <div class="section-title">
+          <h2>Решения</h2>
+          <a class="small" href="../SolinkWorkspace/DECISIONS_LOG_RU.md">журнал</a>
+        </div>
+        <div class="timeline">
+          <div class="event">
+            <strong>Файлы вместо раздутого чата</strong>
+            Контекст проектов хранится в Markdown, чат остается рабочей комнатой.
+          </div>
+          <div class="event">
+            <strong>HTML не запускает EXE</strong>
+            Интерфейс отправляет команды локальному Command Service.
+          </div>
+          <div class="event">
+            <strong>Роли вместо моделей</strong>
+            Используем fast, smart, code, research, а конкретные модели можно менять.
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>
