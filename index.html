@@ -329,6 +329,7 @@
     let currentData = fallbackData;
     let currentFilter = "active";
     let currentQuery = "";
+    let selectedProjectId = "solink-workspace";
 
     const byId = (id) => document.getElementById(id);
     const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
@@ -385,11 +386,23 @@
       const activeCount = projects.filter((project) => (project.category || "active") === "active").length;
       byId("projectCount").textContent = `${activeCount} активных`;
       byId("projectNav").innerHTML = projects.map((project, index) => `
-        <a class="nav-item ${index === 0 ? "active" : ""}" href="${escapeHtml(project.primaryLink || "#")}">
+        <a class="nav-item ${project.id === selectedProjectId || (!selectedProjectId && index === 0) ? "active" : ""}" href="#${escapeHtml(project.id || "")}" data-project-id="${escapeHtml(project.id || "")}">
           <span>${escapeHtml(project.title)}</span>
           <span class="badge">${escapeHtml(project.badge)}</span>
         </a>
       `).join("");
+      byId("projectNav").querySelectorAll("[data-project-id]").forEach((link) => {
+        link.addEventListener("click", (event) => {
+          event.preventDefault();
+          const projectId = link.dataset.projectId;
+          const project = currentData.projects.find((item) => item.id === projectId);
+          if (!project) return;
+          selectedProjectId = projectId;
+          currentFilter = project.category || "active";
+          render(currentData);
+          document.querySelector(`[data-card-id="${CSS.escape(projectId)}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+      });
     }
 
     function renderCards(projects) {
@@ -399,11 +412,11 @@
         return;
       }
       byId("projectCards").innerHTML = projects.map((project) => {
-        const actions = (project.actions || []).map((action) => `
+        const actions = (project.actions || []).filter((action) => action.href).map((action) => `
           <a class="button ${action.primary ? "primary" : ""}" href="${escapeHtml(action.href)}">${escapeHtml(action.label)}</a>
         `).join("");
         return `
-          <article class="project-card">
+          <article class="project-card" data-card-id="${escapeHtml(project.id || "")}">
             <div class="project-head">
               <h3>${escapeHtml(project.title)}</h3>
               <span class="status ${escapeHtml(project.statusClass || "ok")}">${escapeHtml(project.status)}</span>
@@ -411,9 +424,9 @@
             <div class="next">${escapeHtml(project.next)}</div>
             <div class="meta">
               <span>Momentum: ${escapeHtml(project.momentum)}</span>
-              <span>Папка: ${escapeHtml(project.folder)}</span>
+              <span>${project.folder ? `Папка: ${escapeHtml(project.folder)}` : "Папка: пока не назначена"}</span>
             </div>
-            <div class="actions">${actions}</div>
+            <div class="actions">${actions || '<span class="small">Карточка ещё не опубликована</span>'}</div>
           </article>
         `;
       }).join("");

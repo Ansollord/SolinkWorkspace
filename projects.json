@@ -30,13 +30,8 @@
       "momentum": "высокий",
       "folder": "C:\\Users\\solin\\Documents\\Codex\\SolinkWorkspace",
       "next": "Собрать первый HTML Command Center: проекты, статус, momentum, следующий шаг, быстрые ссылки.",
-      "primaryLink": "projects/SOLINK_WORKSPACE_RU.md",
+      "primaryLink": "",
       "actions": [
-        {
-          "label": "Карточка",
-          "href": "projects/SOLINK_WORKSPACE_RU.md",
-          "primary": true
-        },
         {
           "label": "Manifest",
           "href": "MANIFEST_RU.md"
@@ -57,18 +52,8 @@
       "momentum": "средний",
       "folder": "C:\\Users\\solin\\Documents\\WebLinker",
       "next": "Сверить текущую карту проекта и определить место Board в общей среде.",
-      "primaryLink": "projects/WEBLINKER_BOARD_RU.md",
-      "actions": [
-        {
-          "label": "Карточка",
-          "href": "projects/WEBLINKER_BOARD_RU.md",
-          "primary": true
-        },
-        {
-          "label": "Карта",
-          "href": "PROJECT_MAP_RU.md"
-        }
-      ]
+      "primaryLink": "",
+      "actions": []
     },
     {
       "id": "weblinker-catalog",
@@ -80,18 +65,8 @@
       "momentum": "высокий",
       "folder": "C:\\Users\\solin\\Documents\\Codex\\web1node",
       "next": "Довести стандарт карточки обычного сайта после YouTube-шаблона.",
-      "primaryLink": "projects/WEBLINKER_CATALOG_RU.md",
-      "actions": [
-        {
-          "label": "Карточка",
-          "href": "projects/WEBLINKER_CATALOG_RU.md",
-          "primary": true
-        },
-        {
-          "label": "Catalog",
-          "href": "https://ansollord.github.io/SolinkWorkspace/"
-        }
-      ]
+      "primaryLink": "",
+      "actions": []
     },
     {
       "id": "solinkdesk",
