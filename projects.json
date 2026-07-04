@@ -31,16 +31,7 @@
       "folder": "C:\\Users\\solin\\Documents\\Codex\\SolinkWorkspace",
       "next": "Собрать первый HTML Command Center: проекты, статус, momentum, следующий шаг, быстрые ссылки.",
       "primaryLink": "",
-      "actions": [
-        {
-          "label": "Manifest",
-          "href": "MANIFEST_RU.md"
-        },
-        {
-          "label": "Roadmap",
-          "href": "ROADMAP_RU.md"
-        }
-      ]
+      "actions": []
     },
     {
       "id": "weblinker-board",
