@@ -46,7 +46,7 @@
       color: white;
       font-weight: 800;
     }
-    .title { min-width: 240px; }
+    .title { min-width: 0; }
     .title h1 { margin: 0; font-size: 20px; line-height: 1.1; }
     .title div { margin-top: 3px; color: var(--muted); font-size: 12px; }
     .search {
@@ -192,9 +192,22 @@
       .hero { grid-template-columns: 1fr; }
     }
     @media (max-width: 760px) {
-      .topbar { flex-wrap: wrap; height: auto; }
+      .shell { grid-template-rows: auto 1fr; }
+      .topbar { flex-wrap: wrap; height: auto; padding: 10px 12px; }
+      .mark { width: 34px; height: 34px; }
+      .title { flex: 1 1 calc(100% - 54px); }
+      .search { order: 3; flex: 1 1 100%; max-width: none; }
+      .status-strip { order: 4; margin-left: 0; white-space: normal; }
       .layout { grid-template-columns: 1fr; }
       .sidebar { display: none; }
+      .main { padding: 12px; }
+      .mission { padding: 14px; }
+      .mission h2 { font-size: 20px; }
+      .telemetry { grid-template-columns: 1fr; }
+      .cards { grid-template-columns: minmax(0, 1fr); }
+      .project-card { min-height: 0; }
+      .project-head { flex-wrap: wrap; }
+      .status { white-space: normal; }
     }
   </style>
 </head>
@@ -263,7 +276,7 @@
           status: "Работает агент",
           statusClass: "agent",
           momentum: "высокий",
-          folder: "C:\\Users\\solin\\Documents\\Codex\\SolinkWorkspace",
+          folder: "C:\\Users\\solin\\Documents\\Codex\\workspace",
           next: "Собрать первый HTML Command Center: проекты, статус, momentum, следующий шаг, быстрые ссылки.",
           primaryLink: "",
           actions: []

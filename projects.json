@@ -28,7 +28,7 @@
       "status": "Работает агент",
       "statusClass": "agent",
       "momentum": "высокий",
-      "folder": "C:\\Users\\solin\\Documents\\Codex\\SolinkWorkspace",
+      "folder": "C:\\Users\\solin\\Documents\\Codex\\workspace",
       "next": "Собрать первый HTML Command Center: проекты, статус, momentum, следующий шаг, быстрые ссылки.",
       "primaryLink": "",
       "actions": []
@@ -93,7 +93,7 @@
       "status": "Норма",
       "statusClass": "ok",
       "momentum": "высокий",
-      "folder": "C:\\Users\\solin\\Documents\\Codex\\SolinkWorkspace",
+      "folder": "C:\\Users\\solin\\Documents\\Codex\\workspace",
       "next": "Развить текущую страницу в полноценный Command Center с JSON-данными и фильтрами.",
       "primaryLink": "index.html",
       "actions": [
