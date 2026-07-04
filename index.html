@@ -185,7 +185,7 @@
       <div class="mark">SW</div>
       <div class="title">
         <h1>Solink Workspace</h1>
-        <div>AI command center · 4 июля 2026</div>
+        <div id="workspaceDate">AI command center · 4 июля 2026</div>
       </div>
       <input class="search" type="search" placeholder="Поиск по проектам, задачам и решениям">
       <div class="status-strip"><span class="dot"></span> Workspace online</div>
@@ -195,13 +195,9 @@
       <aside class="sidebar">
         <div class="section-title">
           <h2>Проекты</h2>
-          <span class="small">3 активных</span>
+          <span class="small" id="projectCount">3 активных</span>
         </div>
-        <nav class="nav-list" aria-label="Проекты">
-          <a class="nav-item active" href="../SolinkWorkspace/projects/SOLINK_WORKSPACE_RU.md"><span>Solink Workspace</span><span class="badge">AI</span></a>
-          <a class="nav-item" href="../SolinkWorkspace/projects/WEBLINKER_BOARD_RU.md"><span>WebLinker Board</span><span class="badge">B</span></a>
-          <a class="nav-item" href="../SolinkWorkspace/projects/WEBLINKER_CATALOG_RU.md"><span>WebLinker Catalog</span><span class="badge">C</span></a>
-        </nav>
+        <nav class="nav-list" id="projectNav" aria-label="Проекты"></nav>
       </aside>
 
       <main class="main">
@@ -210,92 +206,164 @@
             <h2>Главный пульт проектов</h2>
             <p>Здесь собирается оперативная картина: какие проекты живые, где нужен агент, что делать следующим шагом и какие документы читать перед стартом работы.</p>
           </div>
-          <div class="telemetry">
-            <div class="metric"><strong>3</strong><span>активных проекта</span></div>
-            <div class="metric"><strong>1</strong><span>агент в работе</span></div>
-            <div class="metric"><strong>2</strong><span>направления WebLinker</span></div>
-            <div class="metric"><strong>v0.1</strong><span>файловая память</span></div>
-          </div>
+          <div class="telemetry" id="metrics"></div>
         </section>
 
         <div class="section-title">
           <h2>Активные проекты</h2>
-          <span class="small">Источник: PROJECTS_HUB_RU.md</span>
+          <span class="small">Источник: projects.json</span>
         </div>
 
-        <section class="cards">
-          <article class="project-card">
-            <div class="project-head">
-              <h3>Solink Workspace</h3>
-              <span class="status agent">Работает агент</span>
-            </div>
-            <div class="next">Собрать первый HTML Command Center: проекты, статус, momentum, следующий шаг, быстрые ссылки.</div>
-            <div class="meta">
-              <span>Momentum: высокий</span>
-              <span>Папка: C:\Users\solin\Documents\Codex\SolinkWorkspace</span>
-            </div>
-            <div class="actions">
-              <a class="button primary" href="../SolinkWorkspace/projects/SOLINK_WORKSPACE_RU.md">Карточка</a>
-              <a class="button" href="../SolinkWorkspace/MANIFEST_RU.md">Manifest</a>
-              <a class="button" href="../SolinkWorkspace/ROADMAP_RU.md">Roadmap</a>
-            </div>
-          </article>
-
-          <article class="project-card">
-            <div class="project-head">
-              <h3>WebLinker Board</h3>
-              <span class="status ok">Норма</span>
-            </div>
-            <div class="next">Сверить текущую карту проекта и определить место Board в общей среде.</div>
-            <div class="meta">
-              <span>Momentum: средний</span>
-              <span>Папка: C:\Users\solin\Documents\WebLinker</span>
-            </div>
-            <div class="actions">
-              <a class="button primary" href="../SolinkWorkspace/projects/WEBLINKER_BOARD_RU.md">Карточка</a>
-              <a class="button" href="file:///C:/Users/solin/Documents/WebLinker/PROJECT_MAP_RU.md">Карта</a>
-            </div>
-          </article>
-
-          <article class="project-card">
-            <div class="project-head">
-              <h3>WebLinker Catalog</h3>
-              <span class="status ok">Норма</span>
-            </div>
-            <div class="next">Довести стандарт карточки обычного сайта после YouTube-шаблона.</div>
-            <div class="meta">
-              <span>Momentum: высокий</span>
-              <span>Папка: C:\Users\solin\Documents\Codex\web1node</span>
-            </div>
-            <div class="actions">
-              <a class="button primary" href="../SolinkWorkspace/projects/WEBLINKER_CATALOG_RU.md">Карточка</a>
-              <a class="button" href="file:///C:/Users/solin/Documents/Codex/web1node/app/catalog-editor.html">Catalog</a>
-            </div>
-          </article>
-        </section>
+        <section class="cards" id="projectCards"></section>
       </main>
 
       <aside class="rightbar">
         <div class="section-title">
           <h2>Решения</h2>
-          <a class="small" href="../SolinkWorkspace/DECISIONS_LOG_RU.md">журнал</a>
+          <a class="small" href="DECISIONS_LOG_RU.md">журнал</a>
         </div>
-        <div class="timeline">
-          <div class="event">
-            <strong>Файлы вместо раздутого чата</strong>
-            Контекст проектов хранится в Markdown, чат остается рабочей комнатой.
-          </div>
-          <div class="event">
-            <strong>HTML не запускает EXE</strong>
-            Интерфейс отправляет команды локальному Command Service.
-          </div>
-          <div class="event">
-            <strong>Роли вместо моделей</strong>
-            Используем fast, smart, code, research, а конкретные модели можно менять.
-          </div>
-        </div>
+        <div class="timeline" id="decisions"></div>
       </aside>
     </div>
   </div>
+  <script>
+    const fallbackData = {
+      updated: "4 июля 2026",
+      metrics: [
+        { value: "3", label: "активных проекта" },
+        { value: "1", label: "агент в работе" },
+        { value: "2", label: "направления WebLinker" },
+        { value: "v0.1", label: "файловая память" }
+      ],
+      projects: [
+        {
+          title: "Solink Workspace",
+          badge: "AI",
+          status: "Работает агент",
+          statusClass: "agent",
+          momentum: "высокий",
+          folder: "C:\\Users\\solin\\Documents\\Codex\\SolinkWorkspace",
+          next: "Собрать первый HTML Command Center: проекты, статус, momentum, следующий шаг, быстрые ссылки.",
+          primaryLink: "projects/SOLINK_WORKSPACE_RU.md",
+          actions: [
+            { label: "Карточка", href: "projects/SOLINK_WORKSPACE_RU.md", primary: true },
+            { label: "Manifest", href: "MANIFEST_RU.md" },
+            { label: "Roadmap", href: "ROADMAP_RU.md" }
+          ]
+        },
+        {
+          title: "WebLinker Board",
+          badge: "B",
+          status: "Норма",
+          statusClass: "ok",
+          momentum: "средний",
+          folder: "C:\\Users\\solin\\Documents\\WebLinker",
+          next: "Сверить текущую карту проекта и определить место Board в общей среде.",
+          primaryLink: "projects/WEBLINKER_BOARD_RU.md",
+          actions: [
+            { label: "Карточка", href: "projects/WEBLINKER_BOARD_RU.md", primary: true },
+            { label: "Карта", href: "PROJECT_MAP_RU.md" }
+          ]
+        },
+        {
+          title: "WebLinker Catalog",
+          badge: "C",
+          status: "Норма",
+          statusClass: "ok",
+          momentum: "высокий",
+          folder: "C:\\Users\\solin\\Documents\\Codex\\web1node",
+          next: "Довести стандарт карточки обычного сайта после YouTube-шаблона.",
+          primaryLink: "projects/WEBLINKER_CATALOG_RU.md",
+          actions: [
+            { label: "Карточка", href: "projects/WEBLINKER_CATALOG_RU.md", primary: true },
+            { label: "Catalog", href: "https://ansollord.github.io/SolinkWorkspace/" }
+          ]
+        }
+      ],
+      decisions: [
+        {
+          title: "Файлы вместо раздутого чата",
+          text: "Контекст проектов хранится в Markdown, чат остается рабочей комнатой."
+        },
+        {
+          title: "HTML не запускает EXE",
+          text: "Интерфейс отправляет команды локальному Command Service."
+        },
+        {
+          title: "Роли вместо моделей",
+          text: "Используем fast, smart, code, research, а конкретные модели можно менять."
+        }
+      ]
+    };
+
+    const byId = (id) => document.getElementById(id);
+    const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    })[char]);
+
+    function renderMetrics(metrics) {
+      byId("metrics").innerHTML = metrics.map((metric) => `
+        <div class="metric"><strong>${escapeHtml(metric.value)}</strong><span>${escapeHtml(metric.label)}</span></div>
+      `).join("");
+    }
+
+    function renderNav(projects) {
+      byId("projectCount").textContent = `${projects.length} активных`;
+      byId("projectNav").innerHTML = projects.map((project, index) => `
+        <a class="nav-item ${index === 0 ? "active" : ""}" href="${escapeHtml(project.primaryLink)}">
+          <span>${escapeHtml(project.title)}</span>
+          <span class="badge">${escapeHtml(project.badge)}</span>
+        </a>
+      `).join("");
+    }
+
+    function renderCards(projects) {
+      byId("projectCards").innerHTML = projects.map((project) => {
+        const actions = (project.actions || []).map((action) => `
+          <a class="button ${action.primary ? "primary" : ""}" href="${escapeHtml(action.href)}">${escapeHtml(action.label)}</a>
+        `).join("");
+        return `
+          <article class="project-card">
+            <div class="project-head">
+              <h3>${escapeHtml(project.title)}</h3>
+              <span class="status ${escapeHtml(project.statusClass || "ok")}">${escapeHtml(project.status)}</span>
+            </div>
+            <div class="next">${escapeHtml(project.next)}</div>
+            <div class="meta">
+              <span>Momentum: ${escapeHtml(project.momentum)}</span>
+              <span>Папка: ${escapeHtml(project.folder)}</span>
+            </div>
+            <div class="actions">${actions}</div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function renderDecisions(decisions) {
+      byId("decisions").innerHTML = decisions.map((event) => `
+        <div class="event">
+          <strong>${escapeHtml(event.title)}</strong>
+          ${escapeHtml(event.text)}
+        </div>
+      `).join("");
+    }
+
+    function render(data) {
+      byId("workspaceDate").textContent = `AI command center · ${data.updated}`;
+      renderMetrics(data.metrics || fallbackData.metrics);
+      renderNav(data.projects || []);
+      renderCards(data.projects || []);
+      renderDecisions(data.decisions || []);
+    }
+
+    fetch("projects.json", { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error("projects.json not found")))
+      .then(render)
+      .catch(() => render(fallbackData));
+  </script>
 </body>
 </html>

@@ -1,0 +1,108 @@
+{
+  "updated": "4 июля 2026",
+  "version": "v0.1",
+  "metrics": [
+    {
+      "value": "3",
+      "label": "активных проекта"
+    },
+    {
+      "value": "1",
+      "label": "агент в работе"
+    },
+    {
+      "value": "2",
+      "label": "направления WebLinker"
+    },
+    {
+      "value": "v0.1",
+      "label": "файловая память"
+    }
+  ],
+  "projects": [
+    {
+      "id": "solink-workspace",
+      "title": "Solink Workspace",
+      "badge": "AI",
+      "status": "Работает агент",
+      "statusClass": "agent",
+      "momentum": "высокий",
+      "folder": "C:\\Users\\solin\\Documents\\Codex\\SolinkWorkspace",
+      "next": "Собрать первый HTML Command Center: проекты, статус, momentum, следующий шаг, быстрые ссылки.",
+      "primaryLink": "projects/SOLINK_WORKSPACE_RU.md",
+      "actions": [
+        {
+          "label": "Карточка",
+          "href": "projects/SOLINK_WORKSPACE_RU.md",
+          "primary": true
+        },
+        {
+          "label": "Manifest",
+          "href": "MANIFEST_RU.md"
+        },
+        {
+          "label": "Roadmap",
+          "href": "ROADMAP_RU.md"
+        }
+      ]
+    },
+    {
+      "id": "weblinker-board",
+      "title": "WebLinker Board",
+      "badge": "B",
+      "status": "Норма",
+      "statusClass": "ok",
+      "momentum": "средний",
+      "folder": "C:\\Users\\solin\\Documents\\WebLinker",
+      "next": "Сверить текущую карту проекта и определить место Board в общей среде.",
+      "primaryLink": "projects/WEBLINKER_BOARD_RU.md",
+      "actions": [
+        {
+          "label": "Карточка",
+          "href": "projects/WEBLINKER_BOARD_RU.md",
+          "primary": true
+        },
+        {
+          "label": "Карта",
+          "href": "PROJECT_MAP_RU.md"
+        }
+      ]
+    },
+    {
+      "id": "weblinker-catalog",
+      "title": "WebLinker Catalog",
+      "badge": "C",
+      "status": "Норма",
+      "statusClass": "ok",
+      "momentum": "высокий",
+      "folder": "C:\\Users\\solin\\Documents\\Codex\\web1node",
+      "next": "Довести стандарт карточки обычного сайта после YouTube-шаблона.",
+      "primaryLink": "projects/WEBLINKER_CATALOG_RU.md",
+      "actions": [
+        {
+          "label": "Карточка",
+          "href": "projects/WEBLINKER_CATALOG_RU.md",
+          "primary": true
+        },
+        {
+          "label": "Catalog",
+          "href": "https://ansollord.github.io/SolinkWorkspace/"
+        }
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "title": "Файлы вместо раздутого чата",
+      "text": "Контекст проектов хранится в Markdown, чат остается рабочей комнатой."
+    },
+    {
+      "title": "HTML не запускает EXE",
+      "text": "Интерфейс отправляет команды локальному Command Service."
+    },
+    {
+      "title": "Роли вместо моделей",
+      "text": "Используем fast, smart, code, research, а конкретные модели можно менять."
+    }
+  ]
+}
