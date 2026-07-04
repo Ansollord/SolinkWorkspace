@@ -147,6 +147,25 @@
     }
     .status.ok { background: #dff0ec; color: #0f5f55; }
     .status.agent { background: #dceafb; color: var(--blue); }
+    .status.warn { background: #f7ebcc; color: #8a5a07; }
+    .status.paused { background: #ece6da; color: #695f51; }
+    .status.idea { background: #e8edf7; color: #31547c; }
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 14px; }
+    .filter-button {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: white;
+      padding: 7px 11px;
+      font: inherit;
+      font-weight: 700;
+      color: #302b22;
+      cursor: pointer;
+    }
+    .filter-button.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
     .next {
       border-left: 3px solid var(--accent);
       padding-left: 10px;
@@ -187,7 +206,7 @@
         <h1>Solink Workspace</h1>
         <div id="workspaceDate">AI command center · 4 июля 2026</div>
       </div>
-      <input class="search" type="search" placeholder="Поиск по проектам, задачам и решениям">
+      <input class="search" id="search" type="search" placeholder="Поиск по проектам, задачам и решениям">
       <div class="status-strip"><span class="dot"></span> Workspace online</div>
     </header>
 
@@ -210,9 +229,10 @@
         </section>
 
         <div class="section-title">
-          <h2>Активные проекты</h2>
+          <h2 id="projectSectionTitle">Активные проекты</h2>
           <span class="small">Источник: projects.json</span>
         </div>
+        <div class="filters" id="projectFilters" aria-label="Фильтры проектов"></div>
 
         <section class="cards" id="projectCards"></section>
       </main>
@@ -230,14 +250,15 @@
     const fallbackData = {
       updated: "4 июля 2026",
       metrics: [
-        { value: "3", label: "активных проекта" },
+        { value: "4", label: "активных проекта" },
         { value: "1", label: "агент в работе" },
-        { value: "2", label: "направления WebLinker" },
+        { value: "10", label: "идей в ожидании" },
         { value: "v0.1", label: "файловая память" }
       ],
       projects: [
         {
           title: "Solink Workspace",
+          category: "active",
           badge: "AI",
           status: "Работает агент",
           statusClass: "agent",
@@ -253,6 +274,7 @@
         },
         {
           title: "WebLinker Board",
+          category: "active",
           badge: "B",
           status: "Норма",
           statusClass: "ok",
@@ -267,6 +289,7 @@
         },
         {
           title: "WebLinker Catalog",
+          category: "active",
           badge: "C",
           status: "Норма",
           statusClass: "ok",
@@ -296,6 +319,17 @@
       ]
     };
 
+    const filterLabels = {
+      active: "Активные",
+      all: "Все",
+      paused: "Пауза",
+      ideas: "Идеи",
+      archive: "Архив"
+    };
+    let currentData = fallbackData;
+    let currentFilter = "active";
+    let currentQuery = "";
+
     const byId = (id) => document.getElementById(id);
     const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
       "&": "&amp;",
@@ -311,10 +345,47 @@
       `).join("");
     }
 
+    function visibleProjects(projects) {
+      const source = currentFilter === "all"
+        ? projects
+        : projects.filter((project) => (project.category || "active") === currentFilter);
+      const query = currentQuery.trim().toLowerCase();
+      if (!query) return source;
+      return source.filter((project) => [
+        project.title,
+        project.status,
+        project.momentum,
+        project.folder,
+        project.next,
+        project.badge
+      ].join(" ").toLowerCase().includes(query));
+    }
+
+    function renderFilters(projects) {
+      const counts = projects.reduce((result, project) => {
+        const category = project.category || "active";
+        result[category] = (result[category] || 0) + 1;
+        result.all += 1;
+        return result;
+      }, { all: 0, active: 0, paused: 0, ideas: 0, archive: 0 });
+      byId("projectFilters").innerHTML = ["active", "all", "paused", "ideas", "archive"].map((filter) => `
+        <button class="filter-button ${currentFilter === filter ? "active" : ""}" type="button" data-filter="${filter}">
+          ${filterLabels[filter]} ${counts[filter] || 0}
+        </button>
+      `).join("");
+      byId("projectFilters").querySelectorAll("button").forEach((button) => {
+        button.addEventListener("click", () => {
+          currentFilter = button.dataset.filter;
+          render(currentData);
+        });
+      });
+    }
+
     function renderNav(projects) {
-      byId("projectCount").textContent = `${projects.length} активных`;
+      const activeCount = projects.filter((project) => (project.category || "active") === "active").length;
+      byId("projectCount").textContent = `${activeCount} активных`;
       byId("projectNav").innerHTML = projects.map((project, index) => `
-        <a class="nav-item ${index === 0 ? "active" : ""}" href="${escapeHtml(project.primaryLink)}">
+        <a class="nav-item ${index === 0 ? "active" : ""}" href="${escapeHtml(project.primaryLink || "#")}">
           <span>${escapeHtml(project.title)}</span>
           <span class="badge">${escapeHtml(project.badge)}</span>
         </a>
@@ -322,6 +393,11 @@
     }
 
     function renderCards(projects) {
+      byId("projectSectionTitle").textContent = `${filterLabels[currentFilter]} проекты`;
+      if (!projects.length) {
+        byId("projectCards").innerHTML = `<article class="project-card"><div class="next">По этому фильтру пока ничего не найдено.</div></article>`;
+        return;
+      }
       byId("projectCards").innerHTML = projects.map((project) => {
         const actions = (project.actions || []).map((action) => `
           <a class="button ${action.primary ? "primary" : ""}" href="${escapeHtml(action.href)}">${escapeHtml(action.label)}</a>
@@ -353,12 +429,21 @@
     }
 
     function render(data) {
+      currentData = data;
+      const projects = data.projects || [];
+      const filtered = visibleProjects(projects);
       byId("workspaceDate").textContent = `AI command center · ${data.updated}`;
       renderMetrics(data.metrics || fallbackData.metrics);
-      renderNav(data.projects || []);
-      renderCards(data.projects || []);
+      renderFilters(projects);
+      renderNav(projects);
+      renderCards(filtered);
       renderDecisions(data.decisions || []);
     }
+
+    byId("search").addEventListener("input", (event) => {
+      currentQuery = event.target.value;
+      render(currentData);
+    });
 
     fetch("projects.json", { cache: "no-store" })
       .then((response) => response.ok ? response.json() : Promise.reject(new Error("projects.json not found")))

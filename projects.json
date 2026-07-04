@@ -3,7 +3,7 @@
   "version": "v0.1",
   "metrics": [
     {
-      "value": "3",
+      "value": "4",
       "label": "активных проекта"
     },
     {
@@ -11,8 +11,8 @@
       "label": "агент в работе"
     },
     {
-      "value": "2",
-      "label": "направления WebLinker"
+      "value": "9",
+      "label": "идей в ожидании"
     },
     {
       "value": "v0.1",
@@ -22,6 +22,7 @@
   "projects": [
     {
       "id": "solink-workspace",
+      "category": "active",
       "title": "Solink Workspace",
       "badge": "AI",
       "status": "Работает агент",
@@ -48,6 +49,7 @@
     },
     {
       "id": "weblinker-board",
+      "category": "active",
       "title": "WebLinker Board",
       "badge": "B",
       "status": "Норма",
@@ -70,6 +72,7 @@
     },
     {
       "id": "weblinker-catalog",
+      "category": "active",
       "title": "WebLinker Catalog",
       "badge": "C",
       "status": "Норма",
@@ -89,6 +92,155 @@
           "href": "https://ansollord.github.io/SolinkWorkspace/"
         }
       ]
+    },
+    {
+      "id": "solinkdesk",
+      "category": "ideas",
+      "title": "SolinkDesk",
+      "badge": "SD",
+      "status": "Требует уточнения",
+      "statusClass": "warn",
+      "momentum": "низкий",
+      "folder": "",
+      "next": "Описать цель продукта, границы первой версии и связь с Solink Workspace.",
+      "primaryLink": "",
+      "actions": []
+    },
+    {
+      "id": "software-platform",
+      "category": "ideas",
+      "title": "Software Platform",
+      "badge": "SP",
+      "status": "Требует уточнения",
+      "statusClass": "warn",
+      "momentum": "низкий",
+      "folder": "",
+      "next": "Определить, какие общие модули должны обслуживать WebLinker, SolinkDesk и будущие продукты.",
+      "primaryLink": "",
+      "actions": []
+    },
+    {
+      "id": "html-portal",
+      "category": "active",
+      "title": "HTML Portal",
+      "badge": "HP",
+      "status": "Норма",
+      "statusClass": "ok",
+      "momentum": "высокий",
+      "folder": "C:\\Users\\solin\\Documents\\Codex\\SolinkWorkspace",
+      "next": "Развить текущую страницу в полноценный Command Center с JSON-данными и фильтрами.",
+      "primaryLink": "index.html",
+      "actions": [
+        {
+          "label": "Панель",
+          "href": "index.html",
+          "primary": true
+        }
+      ]
+    },
+    {
+      "id": "automation",
+      "category": "paused",
+      "title": "Automation",
+      "badge": "AU",
+      "status": "Пауза",
+      "statusClass": "paused",
+      "momentum": "средний",
+      "folder": "",
+      "next": "После стабилизации Command Center спроектировать безопасный Command Service.",
+      "primaryLink": "",
+      "actions": []
+    },
+    {
+      "id": "electronics",
+      "category": "ideas",
+      "title": "Electronics",
+      "badge": "EL",
+      "status": "Идея",
+      "statusClass": "idea",
+      "momentum": "низкий",
+      "folder": "",
+      "next": "Создать карточку направления и перечислить текущие устройства/разработки.",
+      "primaryLink": "",
+      "actions": []
+    },
+    {
+      "id": "dsp",
+      "category": "ideas",
+      "title": "DSP",
+      "badge": "DS",
+      "status": "Идея",
+      "statusClass": "idea",
+      "momentum": "низкий",
+      "folder": "",
+      "next": "Собрать список задач по обработке сигналов и связи с аудио/радио проектами.",
+      "primaryLink": "",
+      "actions": []
+    },
+    {
+      "id": "wireless-audio",
+      "category": "ideas",
+      "title": "Wireless Audio",
+      "badge": "WA",
+      "status": "Идея",
+      "statusClass": "idea",
+      "momentum": "низкий",
+      "folder": "",
+      "next": "Описать целевой продукт и технические ограничения.",
+      "primaryLink": "",
+      "actions": []
+    },
+    {
+      "id": "industrial-design",
+      "category": "ideas",
+      "title": "Industrial Design",
+      "badge": "ID",
+      "status": "Идея",
+      "statusClass": "idea",
+      "momentum": "низкий",
+      "folder": "",
+      "next": "Сформировать карточку направления и привязать будущие визуальные материалы.",
+      "primaryLink": "",
+      "actions": []
+    },
+    {
+      "id": "cad",
+      "category": "ideas",
+      "title": "CAD",
+      "badge": "CAD",
+      "status": "Идея",
+      "statusClass": "idea",
+      "momentum": "низкий",
+      "folder": "",
+      "next": "Описать связь с SolidWorks и будущими командами открытия проектов.",
+      "primaryLink": "",
+      "actions": []
+    },
+    {
+      "id": "aviation",
+      "category": "ideas",
+      "title": "Aviation",
+      "badge": "AV",
+      "status": "Идея",
+      "statusClass": "idea",
+      "momentum": "средний",
+      "folder": "",
+      "next": "Зафиксировать интерфейсную философию: авиационная панель без копирования кабины.",
+      "primaryLink": "",
+      "actions": []
+    },
+    {
+      "id": "business",
+      "category": "ideas",
+      "title": "Business",
+      "badge": "BU",
+      "status": "Идея",
+      "statusClass": "idea",
+      "momentum": "низкий",
+      "folder": "",
+      "next": "Создать отдельную карту бизнес-направлений и приоритетов.",
+      "primaryLink": "",
+      "actions": []
     }
   ],
   "decisions": [
