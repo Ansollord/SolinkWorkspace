@@ -3,16 +3,16 @@
   "version": "v0.1",
   "metrics": [
     {
-      "value": "4",
+      "value": "2",
       "label": "активных проекта"
     },
     {
       "value": "1",
-      "label": "агент в работе"
+      "label": "рабочее пространство"
     },
     {
-      "value": "9",
-      "label": "идей в ожидании"
+      "value": "11",
+      "label": "внутренних направлений"
     },
     {
       "value": "v0.1",
@@ -21,191 +21,77 @@
   ],
   "projects": [
     {
-      "id": "solink-workspace",
+      "id": "weblinker",
       "category": "active",
-      "title": "Solink Workspace",
-      "badge": "AI",
-      "status": "Работает агент",
-      "statusClass": "agent",
-      "momentum": "высокий",
-      "folder": "C:\\Users\\solin\\Documents\\Codex\\workspace",
-      "next": "Собрать первый HTML Command Center: проекты, статус, momentum, следующий шаг, быстрые ссылки.",
-      "primaryLink": "",
-      "actions": []
-    },
-    {
-      "id": "weblinker-board",
-      "category": "active",
-      "title": "WebLinker Board",
-      "badge": "B",
+      "title": "WebLinker",
+      "badge": "WL",
       "status": "Норма",
       "statusClass": "ok",
-      "momentum": "средний",
+      "momentum": "высокий",
       "folder": "C:\\Users\\solin\\Documents\\WebLinker",
-      "next": "Сверить текущую карту проекта и определить место Board в общей среде.",
+      "next": "Свести Board и Catalog в одну карту проекта: что уже работает, что требует агента, какой следующий шаг.",
       "primaryLink": "",
-      "actions": []
-    },
-    {
-      "id": "weblinker-catalog",
-      "category": "active",
-      "title": "WebLinker Catalog",
-      "badge": "C",
-      "status": "Норма",
-      "statusClass": "ok",
-      "momentum": "высокий",
-      "folder": "C:\\Users\\solin\\Documents\\Codex\\web1node",
-      "next": "Довести стандарт карточки обычного сайта после YouTube-шаблона.",
-      "primaryLink": "",
+      "components": [
+        {
+          "title": "Board",
+          "text": "Рабочая доска WebLinker и операционный слой проекта."
+        },
+        {
+          "title": "Catalog",
+          "text": "Каталог сайтов, карточки, обогащение данных и расширения."
+        }
+      ],
       "actions": []
     },
     {
       "id": "solinkdesk",
-      "category": "ideas",
+      "category": "active",
       "title": "SolinkDesk",
       "badge": "SD",
       "status": "Требует уточнения",
       "statusClass": "warn",
-      "momentum": "низкий",
+      "momentum": "средний",
       "folder": "",
-      "next": "Описать цель продукта, границы первой версии и связь с Solink Workspace.",
+      "next": "Описать цель продукта и разложить остальные направления на управляемые подпроекты внутри SolinkDesk.",
       "primaryLink": "",
-      "actions": []
-    },
-    {
-      "id": "software-platform",
-      "category": "ideas",
-      "title": "Software Platform",
-      "badge": "SP",
-      "status": "Требует уточнения",
-      "statusClass": "warn",
-      "momentum": "низкий",
-      "folder": "",
-      "next": "Определить, какие общие модули должны обслуживать WebLinker, SolinkDesk и будущие продукты.",
-      "primaryLink": "",
-      "actions": []
-    },
-    {
-      "id": "html-portal",
-      "category": "active",
-      "title": "HTML Portal",
-      "badge": "HP",
-      "status": "Норма",
-      "statusClass": "ok",
-      "momentum": "высокий",
-      "folder": "C:\\Users\\solin\\Documents\\Codex\\workspace",
-      "next": "Развить текущую страницу в полноценный Command Center с JSON-данными и фильтрами.",
-      "primaryLink": "index.html",
-      "actions": [
+      "components": [
         {
-          "label": "Панель",
-          "href": "index.html",
-          "primary": true
+          "title": "Software Platform",
+          "text": "Общие модули для будущих продуктов."
+        },
+        {
+          "title": "Electronics",
+          "text": "Устройства, схемы, аппаратные разработки."
+        },
+        {
+          "title": "DSP",
+          "text": "Обработка сигналов, аудио и радиосвязанные задачи."
+        },
+        {
+          "title": "Wireless Audio",
+          "text": "Целевой продукт и технические ограничения."
+        },
+        {
+          "title": "Industrial Design",
+          "text": "Визуальные материалы и промышленный дизайн."
+        },
+        {
+          "title": "CAD",
+          "text": "SolidWorks и будущие команды открытия проектов."
+        },
+        {
+          "title": "Aviation",
+          "text": "Интерфейсная философия и панель управления."
+        },
+        {
+          "title": "Business",
+          "text": "Бизнес-направления и приоритеты."
+        },
+        {
+          "title": "Automation",
+          "text": "Будущий безопасный Command Service."
         }
-      ]
-    },
-    {
-      "id": "automation",
-      "category": "paused",
-      "title": "Automation",
-      "badge": "AU",
-      "status": "Пауза",
-      "statusClass": "paused",
-      "momentum": "средний",
-      "folder": "",
-      "next": "После стабилизации Command Center спроектировать безопасный Command Service.",
-      "primaryLink": "",
-      "actions": []
-    },
-    {
-      "id": "electronics",
-      "category": "ideas",
-      "title": "Electronics",
-      "badge": "EL",
-      "status": "Идея",
-      "statusClass": "idea",
-      "momentum": "низкий",
-      "folder": "",
-      "next": "Создать карточку направления и перечислить текущие устройства/разработки.",
-      "primaryLink": "",
-      "actions": []
-    },
-    {
-      "id": "dsp",
-      "category": "ideas",
-      "title": "DSP",
-      "badge": "DS",
-      "status": "Идея",
-      "statusClass": "idea",
-      "momentum": "низкий",
-      "folder": "",
-      "next": "Собрать список задач по обработке сигналов и связи с аудио/радио проектами.",
-      "primaryLink": "",
-      "actions": []
-    },
-    {
-      "id": "wireless-audio",
-      "category": "ideas",
-      "title": "Wireless Audio",
-      "badge": "WA",
-      "status": "Идея",
-      "statusClass": "idea",
-      "momentum": "низкий",
-      "folder": "",
-      "next": "Описать целевой продукт и технические ограничения.",
-      "primaryLink": "",
-      "actions": []
-    },
-    {
-      "id": "industrial-design",
-      "category": "ideas",
-      "title": "Industrial Design",
-      "badge": "ID",
-      "status": "Идея",
-      "statusClass": "idea",
-      "momentum": "низкий",
-      "folder": "",
-      "next": "Сформировать карточку направления и привязать будущие визуальные материалы.",
-      "primaryLink": "",
-      "actions": []
-    },
-    {
-      "id": "cad",
-      "category": "ideas",
-      "title": "CAD",
-      "badge": "CAD",
-      "status": "Идея",
-      "statusClass": "idea",
-      "momentum": "низкий",
-      "folder": "",
-      "next": "Описать связь с SolidWorks и будущими командами открытия проектов.",
-      "primaryLink": "",
-      "actions": []
-    },
-    {
-      "id": "aviation",
-      "category": "ideas",
-      "title": "Aviation",
-      "badge": "AV",
-      "status": "Идея",
-      "statusClass": "idea",
-      "momentum": "средний",
-      "folder": "",
-      "next": "Зафиксировать интерфейсную философию: авиационная панель без копирования кабины.",
-      "primaryLink": "",
-      "actions": []
-    },
-    {
-      "id": "business",
-      "category": "ideas",
-      "title": "Business",
-      "badge": "BU",
-      "status": "Идея",
-      "statusClass": "idea",
-      "momentum": "низкий",
-      "folder": "",
-      "next": "Создать отдельную карту бизнес-направлений и приоритетов.",
-      "primaryLink": "",
+      ],
       "actions": []
     }
   ],
