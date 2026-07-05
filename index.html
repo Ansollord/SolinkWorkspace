@@ -419,19 +419,41 @@
       `).join("");
     }
 
+    function componentId(project, component, index) {
+      return `${project.id || "project"}-${String(component.title || index).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || index}`;
+    }
+
+    function selectedProject(projects) {
+      return projects.find((project) => project.id === selectedProjectId);
+    }
+
     function visibleProjects(projects) {
-      const source = currentFilter === "all"
-        ? projects
-        : projects.filter((project) => (project.category || "active") === currentFilter);
+      const project = selectedProject(projects);
+      const source = project
+        ? (project.components || []).map((component, index) => ({
+            id: componentId(project, component, index),
+            title: component.title,
+            badge: component.badge || "",
+            status: component.status || "\u041f\u043e\u0434\u043f\u0440\u043e\u0435\u043a\u0442",
+            statusClass: component.statusClass || "ok",
+            momentum: component.momentum || project.momentum,
+            folder: component.folder || project.folder,
+            next: component.text || "",
+            actions: component.actions || [],
+            isComponent: true
+          }))
+        : (currentFilter === "all"
+          ? projects
+          : projects.filter((item) => (item.category || "active") === currentFilter));
       const query = currentQuery.trim().toLowerCase();
       if (!query) return source;
-      return source.filter((project) => [
-        project.title,
-        project.status,
-        project.momentum,
-        project.folder,
-        project.next,
-        project.badge
+      return source.filter((item) => [
+        item.title,
+        item.status,
+        item.momentum,
+        item.folder,
+        item.next,
+        item.badge
       ].join(" ").toLowerCase().includes(query));
     }
 
@@ -457,9 +479,9 @@
 
     function renderNav(projects) {
       const activeCount = projects.filter((project) => (project.category || "active") === "active").length;
-      byId("projectCount").textContent = `${activeCount} активных`;
-      byId("projectNav").innerHTML = projects.map((project, index) => `
-        <a class="nav-item ${project.id === selectedProjectId || (!selectedProjectId && index === 0) ? "active" : ""}" href="#${escapeHtml(project.id || "")}" data-project-id="${escapeHtml(project.id || "")}">
+      byId("projectCount").textContent = `${activeCount} \u0430\u043a\u0442\u0438\u0432\u043d\u044b\u0445`;
+      byId("projectNav").innerHTML = projects.map((project) => `
+        <a class="nav-item ${project.id === selectedProjectId ? "active" : ""}" href="#${escapeHtml(project.id || "")}" data-project-id="${escapeHtml(project.id || "")}">
           <span>${escapeHtml(project.title)}</span>
           <span class="badge">${escapeHtml(project.badge)}</span>
         </a>
@@ -471,24 +493,28 @@
           const project = currentData.projects.find((item) => item.id === projectId);
           if (!project) return;
           selectedProjectId = projectId;
-          currentFilter = project.category || "active";
+          currentQuery = "";
+          byId("search").value = "";
           render(currentData);
-          document.querySelector(`[data-card-id="${CSS.escape(projectId)}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
         });
       });
     }
 
     function renderCards(projects) {
-      byId("projectSectionTitle").textContent = `${filterLabels[currentFilter]} проекты`;
+      const parent = selectedProject(currentData.projects || []);
+      byId("projectSectionTitle").textContent = parent
+        ? `${parent.title}: \u043f\u043e\u0434\u043f\u0440\u043e\u0435\u043a\u0442\u044b`
+        : `${filterLabels[currentFilter]} \u043f\u0440\u043e\u0435\u043a\u0442\u044b`;
+      byId("projectFilters").style.display = parent ? "none" : "flex";
       if (!projects.length) {
-        byId("projectCards").innerHTML = `<article class="project-card"><div class="next">По этому фильтру пока ничего не найдено.</div></article>`;
+        byId("projectCards").innerHTML = `<article class="project-card"><div class="next">\u041f\u043e \u044d\u0442\u043e\u043c\u0443 \u0440\u0430\u0437\u0434\u0435\u043b\u0443 \u043f\u043e\u043a\u0430 \u043d\u0438\u0447\u0435\u0433\u043e \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e.</div></article>`;
         return;
       }
       byId("projectCards").innerHTML = projects.map((project) => {
         const actions = (project.actions || []).filter((action) => action.href).map((action) => `
           <a class="button ${action.primary ? "primary" : ""}" href="${escapeHtml(action.href)}">${escapeHtml(action.label)}</a>
         `).join("");
-        const components = (project.components || []).map((component) => `
+        const components = project.isComponent ? "" : (project.components || []).map((component) => `
           <div class="component-item">
             <strong>${escapeHtml(component.title)}</strong>
             <span>${escapeHtml(component.text)}</span>
@@ -504,9 +530,9 @@
             ${components ? `<div class="components">${components}</div>` : ""}
             <div class="meta">
               <span>Momentum: ${escapeHtml(project.momentum)}</span>
-              <span>${project.folder ? `Папка: ${escapeHtml(project.folder)}` : "Папка: пока не назначена"}</span>
+              <span>${project.folder ? `\u041f\u0430\u043f\u043a\u0430: ${escapeHtml(project.folder)}` : "\u041f\u0430\u043f\u043a\u0430: \u043f\u043e\u043a\u0430 \u043d\u0435 \u043d\u0430\u0437\u043d\u0430\u0447\u0435\u043d\u0430"}</span>
             </div>
-            <div class="actions">${actions || '<span class="small">Карточка ещё не опубликована</span>'}</div>
+            <div class="actions">${actions || '<span class="small">\u041a\u0430\u0440\u0442\u043e\u0447\u043a\u0430 \u0435\u0449\u0451 \u043d\u0435 \u043e\u043f\u0443\u0431\u043b\u0438\u043a\u043e\u0432\u0430\u043d\u0430</span>'}</div>
           </article>
         `;
       }).join("");
@@ -539,7 +565,6 @@
       selectedProjectId = "";
       byId("search").value = "";
       render(currentData);
-      byId("projectCards").scrollIntoView({ behavior: "smooth", block: "start" });
     });
 
     byId("search").addEventListener("input", (event) => {
