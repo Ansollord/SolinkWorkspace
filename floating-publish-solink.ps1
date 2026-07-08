@@ -1,3 +1,7 @@
+param(
+  [switch]$Here
+)
+
 $ErrorActionPreference = "Stop"
 
 Add-Type -AssemblyName System.Windows.Forms
@@ -32,10 +36,13 @@ if (Test-Path -LiteralPath $stateFile) {
   }
 }
 
-if ($saved -and $saved.x -ne $null -and $saved.y -ne $null) {
+if ($Here) {
+  $screen = [System.Windows.Forms.Screen]::FromPoint([System.Windows.Forms.Cursor]::Position).WorkingArea
+  $form.Location = New-Object System.Drawing.Point(($screen.Right - $form.Width - 24), ($screen.Bottom - $form.Height - 24))
+} elseif ($saved -and $saved.x -ne $null -and $saved.y -ne $null) {
   $form.Location = New-Object System.Drawing.Point([int]$saved.x, [int]$saved.y)
 } else {
-  $screen = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
+  $screen = [System.Windows.Forms.Screen]::FromPoint([System.Windows.Forms.Cursor]::Position).WorkingArea
   $form.Location = New-Object System.Drawing.Point(($screen.Right - $form.Width - 24), ($screen.Bottom - $form.Height - 24))
 }
 
