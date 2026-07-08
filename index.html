@@ -421,6 +421,7 @@
     .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
     .voice-button.listening { background: #dff0ec; border-color: var(--accent); color: #0f5f55; }
     .task-panel {
+      grid-column: 1 / -1;
       width: 100%;
       max-width: none;
       height: auto;
@@ -440,6 +441,7 @@
       padding: 0;
       min-height: calc(100vh - 104px);
       grid-template-rows: auto auto minmax(0, 1fr) auto;
+      width: 100%;
     }
     .task-panel-main {
       display: grid;
@@ -530,7 +532,7 @@
     }
     .thread-list {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
       align-content: start;
       gap: 10px;
       min-height: 0;
@@ -588,7 +590,7 @@
     .model-choice input { accent-color: var(--accent); }
     .summary-results {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
       gap: 10px;
     }
     .summary-result {
