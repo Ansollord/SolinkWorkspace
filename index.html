@@ -252,11 +252,40 @@
     .task-list { list-style-position: outside; }
     .task-item {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-columns: auto minmax(0, 1fr) auto;
       gap: 8px;
       align-items: start;
     }
+    .task-grip {
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: white;
+      color: var(--muted);
+      cursor: grab;
+      font: inherit;
+      font-weight: 800;
+      line-height: 1;
+      padding: 4px 6px;
+      touch-action: none;
+    }
+    .task-grip:active { cursor: grabbing; }
     .task-text { min-width: 0; }
+    .task-status {
+      display: inline-flex;
+      width: fit-content;
+      border-radius: 999px;
+      padding: 2px 7px;
+      margin: 0 0 5px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .task-status.draft { background: #ece6da; color: #695f51; }
+    .task-status.ready { background: #dceafb; color: var(--blue); }
+    .task-status.sent { background: #e8edf7; color: #31547c; }
+    .task-status.work { background: #f7ebcc; color: #8a5a07; }
+    .task-status.review { background: #dff0ec; color: #0f5f55; }
+    .task-status.done { background: #dff0ec; color: #0f5f55; }
+    .task-status.archive { background: #ece6da; color: #695f51; }
     .task-actions { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
     .task-action {
       border: 1px solid var(--line);
@@ -270,7 +299,10 @@
       padding: 3px 6px;
     }
     .task-action.done { background: #dff0ec; color: #0f5f55; }
+    .task-action.agent { background: #e8edf7; color: #31547c; }
     .task-action.archive { background: #ece6da; color: #695f51; }
+    .task-item.dragging { opacity: .55; }
+    .task-list.drag-over { outline: 2px dashed rgba(17, 119, 103, .35); outline-offset: 4px; }
     .indicator-list {
       display: grid;
       gap: 8px;
@@ -660,6 +692,15 @@
       ideas: "Идеи",
       archive: "Архив"
     };
+    const taskStatusLabels = {
+      draft: "Черновик",
+      ready: "Готово к отправке",
+      sent: "Отправлено агенту",
+      work: "В работе",
+      review: "На проверке",
+      done: "Сделано",
+      archive: "Архив"
+    };
     let currentData = fallbackData;
     let currentFilter = "active";
     let currentQuery = "";
@@ -702,12 +743,29 @@
       return `solink.overview.${parentProject?.id || "root"}.${project.id || project.title}`;
     }
 
+    function makeTask(value, status = "draft") {
+      if (typeof value === "object" && value && "text" in value) {
+        return {
+          text: String(value.text || ""),
+          status: value.status || status
+        };
+      }
+      return {
+        text: String(value || ""),
+        status
+      };
+    }
+
+    function taskText(task) {
+      return typeof task === "object" && task ? String(task.text || "") : String(task || "");
+    }
+
     function overviewState(project, parentProject = null) {
       const key = overviewKey(project, parentProject);
       const overview = project.overview || {};
       const fallback = {
-        todo: [...(overview.todo || [])],
-        done: [...(overview.done || [])],
+        todo: (overview.todo || []).map((item) => makeTask(item)),
+        done: (overview.done || []).map((item) => makeTask(item, "done")),
         archive: [],
         showDone: false
       };
@@ -715,9 +773,9 @@
         const saved = JSON.parse(localStorage.getItem(key) || "null");
         if (!saved || !Array.isArray(saved.todo) || !Array.isArray(saved.done)) return fallback;
         return {
-          todo: saved.todo,
-          done: saved.done,
-          archive: Array.isArray(saved.archive) ? saved.archive : [],
+          todo: saved.todo.map((item) => makeTask(item)),
+          done: saved.done.map((item) => makeTask(item, "done")),
+          archive: Array.isArray(saved.archive) ? saved.archive.map((item) => makeTask(item, "archive")) : [],
           showDone: Boolean(saved.showDone)
         };
       } catch {
@@ -736,6 +794,12 @@
       render(currentData);
     }
 
+    function moveArrayItem(items, from, to) {
+      if (from === to || from < 0 || to < 0 || from >= items.length || to >= items.length) return;
+      const [item] = items.splice(from, 1);
+      items.splice(to, 0, item);
+    }
+
     function normalizeTaskText(value) {
       const text = String(value || "")
         .replace(/\s+/g, " ")
@@ -747,7 +811,7 @@
 
     function openTaskDialog(project, parentProject, mode, index = -1) {
       const state = overviewState(project, parentProject);
-      const current = mode === "edit" ? state.todo[index] || "" : "";
+      const current = mode === "edit" ? taskText(state.todo[index]) : "";
       taskDialogContext = { project, parentProject, mode, index };
       byId("taskDialogTitle").textContent = mode === "edit" ? "Редактировать пункт" : "Добавить пункт";
       byId("taskEditor").value = current;
@@ -769,8 +833,8 @@
       if (!value) return;
       const { project, parentProject, mode, index } = taskDialogContext;
       mutateOverviewState(project, parentProject, (draft) => {
-        if (mode === "edit" && draft.todo[index]) draft.todo[index] = value;
-        if (mode === "add") draft.todo.push(value);
+        if (mode === "edit" && draft.todo[index]) draft.todo[index].text = value;
+        if (mode === "add") draft.todo.push(makeTask(value));
       });
       closeTaskDialog();
     }
@@ -878,18 +942,25 @@
       const total = state.todo.length + state.done.length;
       const progress = total ? Math.round((state.done.length / total) * 100) : 0;
       const todo = state.todo.map((item, index) => `
-        <li>
+        <li draggable="true" data-task-index="${index}">
           <div class="task-item">
-            <span class="task-text">${escapeHtml(item)}</span>
+            <button class="task-grip" type="button" aria-label="Переместить задачу">☰</button>
+            <span class="task-text">
+              <span class="task-status ${escapeHtml(item.status || "draft")}">${escapeHtml(taskStatusLabels[item.status || "draft"] || "Черновик")}</span>
+              ${escapeHtml(taskText(item))}
+            </span>
             <span class="task-actions">
               <button class="task-action" type="button" data-task-action="edit" data-task-index="${index}">Ред.</button>
+              <button class="task-action" type="button" data-task-action="up" data-task-index="${index}">↑</button>
+              <button class="task-action" type="button" data-task-action="down" data-task-index="${index}">↓</button>
+              <button class="task-action agent" type="button" data-task-action="agent" data-task-index="${index}">Агенту</button>
               <button class="task-action done" type="button" data-task-action="done" data-task-index="${index}">Готово</button>
               <button class="task-action archive" type="button" data-task-action="archive" data-task-index="${index}">Архив</button>
             </span>
           </div>
         </li>
       `).join("");
-      const done = state.done.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+      const done = state.done.map((item) => `<li>${escapeHtml(taskText(item))}</li>`).join("");
       const components = (project.components || []).map((component, index) => `
         <button class="overview-component" type="button" data-component-id="${escapeHtml(componentId(project, component, index))}">
           <strong>${escapeHtml(component.title)}</strong>
@@ -965,15 +1036,52 @@
           mutateOverviewState(project, parentProject, (draft) => {
             const item = draft.todo[index];
             if (!item) return;
+            if (action === "up") {
+              moveArrayItem(draft.todo, index, index - 1);
+            }
+            if (action === "down") {
+              moveArrayItem(draft.todo, index, index + 1);
+            }
+            if (action === "agent") {
+              item.status = "sent";
+            }
             if (action === "done") {
               draft.todo.splice(index, 1);
+              item.status = "done";
               draft.done.unshift(item);
               draft.showDone = true;
             }
             if (action === "archive") {
               draft.todo.splice(index, 1);
+              item.status = "archive";
               draft.archive.unshift(item);
             }
+          });
+        });
+      });
+      const taskList = byId("projectCards").querySelector(".task-list");
+      let dragIndex = -1;
+      taskList?.querySelectorAll("[data-task-index]").forEach((row) => {
+        row.addEventListener("dragstart", (event) => {
+          dragIndex = Number(row.dataset.taskIndex);
+          row.classList.add("dragging");
+          taskList.classList.add("drag-over");
+          event.dataTransfer.effectAllowed = "move";
+        });
+        row.addEventListener("dragend", () => {
+          row.classList.remove("dragging");
+          taskList.classList.remove("drag-over");
+          dragIndex = -1;
+        });
+        row.addEventListener("dragover", (event) => {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "move";
+        });
+        row.addEventListener("drop", (event) => {
+          event.preventDefault();
+          const dropIndex = Number(row.dataset.taskIndex);
+          mutateOverviewState(project, parentProject, (draft) => {
+            moveArrayItem(draft.todo, dragIndex, dropIndex);
           });
         });
       });
