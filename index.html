@@ -227,7 +227,12 @@
       border-radius: 8px;
       padding: 12px;
       background: white;
+      color: inherit;
+      font: inherit;
+      text-align: left;
     }
+    button.overview-component { cursor: pointer; }
+    button.overview-component:hover { border-color: var(--accent); box-shadow: 0 8px 18px rgba(17, 119, 103, .12); }
     .overview-component strong { display: block; margin-bottom: 5px; font-size: 15px; }
     .overview-component span { color: var(--muted); line-height: 1.4; }
     .meta { display: grid; gap: 6px; margin-top: auto; color: var(--muted); font-size: 12px; }
@@ -324,139 +329,199 @@
   <script>
     const fallbackData = {
           "updated": "4 июля 2026",
+          "version": "v0.1",
           "metrics": [
-                {
-                      "value": "2",
-                      "label": "активных проекта"
-                },
-                {
-                      "value": "1",
-                      "label": "рабочее пространство"
-                },
-                {
-                      "value": "11",
-                      "label": "внутренних направлений"
-                },
-                {
-                      "value": "v0.1",
-                      "label": "файловая память"
-                }
+                    {
+                              "value": "2",
+                              "label": "активных проекта"
+                    },
+                    {
+                              "value": "1",
+                              "label": "рабочее пространство"
+                    },
+                    {
+                              "value": "11",
+                              "label": "внутренних направлений"
+                    },
+                    {
+                              "value": "v0.1",
+                              "label": "файловая память"
+                    }
           ],
           "projects": [
-                {
-                      "id": "weblinker",
-                      "category": "active",
-                      "title": "WebLinker",
-                      "badge": "WL",
-                      "status": "Норма",
-                      "statusClass": "ok",
-                      "momentum": "высокий",
-                      "folder": "C:\\Users\\solin\\Documents\\WebLinker",
-                      "next": "Оформить WebLinker как единый продукт: Board для ручной визуальной работы, Catalog для больших библиотек ссылок и Reader для чтения подборок.",
-                      "primaryLink": "",
-                      "overview": {
-                            "summary": "WebLinker - личная визуальная библиотека сайтов, ссылок, подборок и рабочих материалов. Board и Catalog не заменяют друг друга: Board отвечает за свободную раскладку важных объектов, Catalog - за большие массивы данных, импорт, поиск и обогащение.",
-                            "todoTitle": "Что нужно сделать",
-                            "doneTitle": "Что уже сделано",
-                            "todo": [
-                                  "Зафиксировать единую модель данных: библиотечная запись, размещение на доске, раздел каталога, теги и метаданные.",
-                                  "Определить физический следующий проект: развивать связку на текущих прототипах или создать отдельный weblinker-next.",
-                                  "Сделать безопасную рабочую копию WebLinker и Web1Node перед объединением.",
-                                  "Выбрать главный экран Catalog и перестать распылять развитие между пробниками Reader.",
-                                  "Сделать надежное сохранение Catalog в файл проекта и резервные копии, а не только автосохранение браузера.",
-                                  "Спроектировать переходы Board -> Catalog -> Reader: отправить карточку на доску, открыть подборку, найти объект во всей библиотеке.",
-                                  "Подготовить чистый демонстрационный набор без личных OneNote-данных."
-                            ],
-                            "done": [
-                                  "Board уже существует как рабочий браузерный редактор с Stable 1.0.0.",
-                                  "Experimental 0.7.3 содержит развитие доски, расширение Edge, импорт/экспорт JSON и автономный HTML.",
-                                  "Созданы браузерные расширения для захвата материалов и отдельная Firefox-ветка.",
-                                  "Catalog/Web1Node доказал импорт OneNote/MHT/ONEPKG в компактный каталог.",
-                                  "В Catalog собрано около 71 раздела и 8639 карточек, включая YouTube, web, shopping, maps и dzen.",
-                                  "Есть Reader-экраны для просмотра больших подборок и локальный Catalog Editor.",
-                                  "Есть Python-инструменты импорта, анализа и обогащения YouTube/веб-метаданных.",
-                                  "Есть архитектурная карта WebLinker и принцип: Board, Catalog и Reader - представления одной будущей библиотеки."
-                            ]
-                      },
-                      "components": [
-                            {
-                                  "title": "Board",
-                                  "text": "Свободная визуальная доска для важных сайтов, карточек, групп, захватов из браузера и ручной композиции."
-                            },
-                            {
-                                  "title": "Catalog",
-                                  "text": "Большая библиотека ссылок, OneNote-импорт, Reader, поиск, разделы, YouTube-данные и будущий редактор массовых коллекций."
-                            }
-                      ],
-                      "actions": []
-                },
-                {
-                      "id": "solinkdesk",
-                      "category": "active",
-                      "title": "SolinkDesk",
-                      "badge": "SD",
-                      "status": "Требует уточнения",
-                      "statusClass": "warn",
-                      "momentum": "средний",
-                      "folder": "",
-                      "next": "Описать цель продукта и разложить остальные направления на управляемые подпроекты внутри SolinkDesk.",
-                      "primaryLink": "",
-                      "components": [
-                            {
-                                  "title": "Software Platform",
-                                  "text": "Общие модули для будущих продуктов."
-                            },
-                            {
-                                  "title": "Electronics",
-                                  "text": "Устройства, схемы, аппаратные разработки."
-                            },
-                            {
-                                  "title": "DSP",
-                                  "text": "Обработка сигналов, аудио и радиосвязанные задачи."
-                            },
-                            {
-                                  "title": "Wireless Audio",
-                                  "text": "Целевой продукт и технические ограничения."
-                            },
-                            {
-                                  "title": "Industrial Design",
-                                  "text": "Визуальные материалы и промышленный дизайн."
-                            },
-                            {
-                                  "title": "CAD",
-                                  "text": "SolidWorks и будущие команды открытия проектов."
-                            },
-                            {
-                                  "title": "Aviation",
-                                  "text": "Интерфейсная философия и панель управления."
-                            },
-                            {
-                                  "title": "Business",
-                                  "text": "Бизнес-направления и приоритеты."
-                            },
-                            {
-                                  "title": "Automation",
-                                  "text": "Будущий безопасный Command Service."
-                            }
-                      ],
-                      "actions": []
-                }
+                    {
+                              "id": "weblinker",
+                              "category": "active",
+                              "title": "WebLinker",
+                              "badge": "WL",
+                              "status": "Норма",
+                              "statusClass": "ok",
+                              "momentum": "высокий",
+                              "folder": "C:\\Users\\solin\\Documents\\WebLinker",
+                              "next": "Оформить WebLinker как единый продукт: Board для ручной визуальной работы, Catalog для больших библиотек ссылок и Reader для чтения подборок.",
+                              "primaryLink": "",
+                              "overview": {
+                                        "summary": "WebLinker - личная визуальная библиотека сайтов, ссылок, подборок и рабочих материалов. Board и Catalog не заменяют друг друга: Board отвечает за свободную раскладку важных объектов, Catalog - за большие массивы данных, импорт, поиск и обогащение.",
+                                        "todoTitle": "Что нужно сделать",
+                                        "doneTitle": "Что уже сделано",
+                                        "todo": [
+                                                  "Зафиксировать единую модель данных: библиотечная запись, размещение на доске, раздел каталога, теги и метаданные.",
+                                                  "Определить физический следующий проект: развивать связку на текущих прототипах или создать отдельный weblinker-next.",
+                                                  "Сделать безопасную рабочую копию WebLinker и Web1Node перед объединением.",
+                                                  "Выбрать главный экран Catalog и перестать распылять развитие между пробниками Reader.",
+                                                  "Сделать надежное сохранение Catalog в файл проекта и резервные копии, а не только автосохранение браузера.",
+                                                  "Спроектировать переходы Board -> Catalog -> Reader: отправить карточку на доску, открыть подборку, найти объект во всей библиотеке.",
+                                                  "Подготовить чистый демонстрационный набор без личных OneNote-данных."
+                                        ],
+                                        "done": [
+                                                  "Board уже существует как рабочий браузерный редактор с Stable 1.0.0.",
+                                                  "Experimental 0.7.3 содержит развитие доски, расширение Edge, импорт/экспорт JSON и автономный HTML.",
+                                                  "Созданы браузерные расширения для захвата материалов и отдельная Firefox-ветка.",
+                                                  "Catalog/Web1Node доказал импорт OneNote/MHT/ONEPKG в компактный каталог.",
+                                                  "В Catalog собрано около 71 раздела и 8639 карточек, включая YouTube, web, shopping, maps и dzen.",
+                                                  "Есть Reader-экраны для просмотра больших подборок и локальный Catalog Editor.",
+                                                  "Есть Python-инструменты импорта, анализа и обогащения YouTube/веб-метаданных.",
+                                                  "Есть архитектурная карта WebLinker и принцип: Board, Catalog и Reader - представления одной будущей библиотеки."
+                                        ]
+                              },
+                              "components": [
+                                        {
+                                                  "id": "board",
+                                                  "title": "Board",
+                                                  "badge": "B",
+                                                  "status": "Работает",
+                                                  "statusClass": "ok",
+                                                  "momentum": "высокий",
+                                                  "folder": "C:\\Users\\solin\\Documents\\WebLinker",
+                                                  "text": "Свободная визуальная доска для важных сайтов, карточек, групп, захватов из браузера и ручной композиции.",
+                                                  "overview": {
+                                                            "summary": "Board - визуальная рабочая доска WebLinker: здесь важные сайты, захваченные страницы и рабочие материалы раскладываются вручную на свободном полотне. Это режим для небольшого количества действительно нужных объектов, где важны положение, группировка и быстрый доступ.",
+                                                            "todoTitle": "Что нужно сделать",
+                                                            "doneTitle": "Что уже сделано",
+                                                            "todo": [
+                                                                      "Не менять Stable 1.0.0 без отдельного решения, новые функции вести через Experimental.",
+                                                                      "Проверить Experimental 0.7.3 в обычном Edge: захват, сохранение, экспорт HTML и восстановление из JSON.",
+                                                                      "Укрепить индикацию локального и облачного состояния, чтобы было понятно, где актуальная версия проекта.",
+                                                                      "Спроектировать отправку карточки из Catalog на Board без потери метаданных.",
+                                                                      "Подготовить минимальный набор проверок перед каждой сборкой расширения.",
+                                                                      "Собрать чистый демонстрационный проект без личных ссылок и изображений."
+                                                            ],
+                                                            "done": [
+                                                                      "Есть рабочий браузерный редактор с древовидными страницами и карточками.",
+                                                                      "Зафиксирован Stable 1.0.0 как рабочая версия с реальной коллекцией пользователя.",
+                                                                      "Есть Experimental 0.7.3 для новых функций и проверки перед переносом.",
+                                                                      "Реализованы свободное перемещение, изменение размеров, групповое выделение и групповые операции.",
+                                                                      "Есть Undo/Redo, настройка внешнего вида, фон, Emboss, часы и курсы валют.",
+                                                                      "Есть импорт/экспорт JSON и автономный HTML-экспорт.",
+                                                                      "Собраны Edge-расширения Stable и Experimental, есть Firefox-ветка.",
+                                                                      "Experimental уже умеет получать новые захваты из браузерного расширения."
+                                                            ]
+                                                  }
+                                        },
+                                        {
+                                                  "id": "catalog",
+                                                  "title": "Catalog",
+                                                  "badge": "C",
+                                                  "status": "Прототип",
+                                                  "statusClass": "agent",
+                                                  "momentum": "высокий",
+                                                  "folder": "C:\\Users\\solin\\Documents\\Codex\\web1node",
+                                                  "text": "Большая библиотека ссылок, OneNote-импорт, Reader, поиск, разделы, YouTube-данные и будущий редактор массовых коллекций.",
+                                                  "overview": {
+                                                            "summary": "Catalog - массовая библиотека WebLinker для тысяч ссылок, импортированных архивов и тематических подборок. Его задача - не ручная раскладка на полотне, а быстрый поиск, разделы, Reader, обогащение данных и безопасная работа с большими коллекциями.",
+                                                            "todoTitle": "Что нужно сделать",
+                                                            "doneTitle": "Что уже сделано",
+                                                            "todo": [
+                                                                      "Оформить web1node как нормальный Git-проект или определить его место внутри будущего WebLinker.",
+                                                                      "Выбрать главный экран Catalog: Catalog Editor, All Reader или новый объединенный экран.",
+                                                                      "Сделать надежное сохранение изменений в data/catalog-project.json и понятные резервные копии.",
+                                                                      "Закрепить схему карточки: URL, тип, заголовок, описание, изображения, теги, разделы и metadata.",
+                                                                      "Довести редактор разделов и карточек: добавление, перенос, скрытие мусора, объединение дублей.",
+                                                                      "Подготовить безопасный мастер импорта, который работает на копии данных и показывает предпросмотр.",
+                                                                      "Сделать чистый демонстрационный каталог без личных OneNote-данных."
+                                                            ],
+                                                            "done": [
+                                                                      "OneNote/MHT/ONEPKG уже импортированы в компактный каталог.",
+                                                                      "Собрана рабочая база примерно из 71 раздела и 8639 карточек.",
+                                                                      "Большая часть карточек уже классифицирована как YouTube, web, shopping, maps или dzen.",
+                                                                      "Есть Reader-экраны для просмотра всего каталога и отдельных подборок.",
+                                                                      "Есть Catalog Editor с разделами, карточками, поиском, переносом, скрытием и резервным экспортом.",
+                                                                      "Есть локальный API-сервер для обновления YouTube-данных, последних роликов и отдельных сайтов.",
+                                                                      "Есть кэши YouTube-каналов, видео, последних роликов и веб-страниц.",
+                                                                      "Описана универсальная архитектура Catalog как системы адаптеров для разных типов источников."
+                                                            ]
+                                                  }
+                                        }
+                              ],
+                              "actions": []
+                    },
+                    {
+                              "id": "solinkdesk",
+                              "category": "active",
+                              "title": "SolinkDesk",
+                              "badge": "SD",
+                              "status": "Требует уточнения",
+                              "statusClass": "warn",
+                              "momentum": "средний",
+                              "folder": "",
+                              "next": "Описать цель продукта и разложить остальные направления на управляемые подпроекты внутри SolinkDesk.",
+                              "primaryLink": "",
+                              "components": [
+                                        {
+                                                  "title": "Software Platform",
+                                                  "text": "Общие модули для будущих продуктов."
+                                        },
+                                        {
+                                                  "title": "Electronics",
+                                                  "text": "Устройства, схемы, аппаратные разработки."
+                                        },
+                                        {
+                                                  "title": "DSP",
+                                                  "text": "Обработка сигналов, аудио и радиосвязанные задачи."
+                                        },
+                                        {
+                                                  "title": "Wireless Audio",
+                                                  "text": "Целевой продукт и технические ограничения."
+                                        },
+                                        {
+                                                  "title": "Industrial Design",
+                                                  "text": "Визуальные материалы и промышленный дизайн."
+                                        },
+                                        {
+                                                  "title": "CAD",
+                                                  "text": "SolidWorks и будущие команды открытия проектов."
+                                        },
+                                        {
+                                                  "title": "Aviation",
+                                                  "text": "Интерфейсная философия и панель управления."
+                                        },
+                                        {
+                                                  "title": "Business",
+                                                  "text": "Бизнес-направления и приоритеты."
+                                        },
+                                        {
+                                                  "title": "Automation",
+                                                  "text": "Будущий безопасный Command Service."
+                                        }
+                              ],
+                              "actions": []
+                    }
           ],
           "decisions": [
-                {
-                      "title": "Файлы вместо раздутого чата",
-                      "text": "Контекст проектов хранится в Markdown, чат остается рабочей комнатой."
-                },
-                {
-                      "title": "HTML не запускает EXE",
-                      "text": "Интерфейс отправляет команды локальному Command Service."
-                },
-                {
-                      "title": "Роли вместо моделей",
-                      "text": "Используем fast, smart, code, research, а конкретные модели можно менять."
-                }
+                    {
+                              "title": "Файлы вместо раздутого чата",
+                              "text": "Контекст проектов хранится в Markdown, чат остается рабочей комнатой."
+                    },
+                    {
+                              "title": "HTML не запускает EXE",
+                              "text": "Интерфейс отправляет команды локальному Command Service."
+                    },
+                    {
+                              "title": "Роли вместо моделей",
+                              "text": "Используем fast, smart, code, research, а конкретные модели можно менять."
+                    }
           ]
-    };
+};
 
     const filterLabels = {
       active: "Активные",
@@ -469,6 +534,7 @@
     let currentFilter = "active";
     let currentQuery = "";
     let selectedProjectId = "";
+    let selectedComponentId = "";
 
     const byId = (id) => document.getElementById(id);
     const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
@@ -486,11 +552,18 @@
     }
 
     function componentId(project, component, index) {
-      return `${project.id || "project"}-${String(component.title || index).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || index}`;
+      return component.id || `${project.id || "project"}-${String(component.title || index).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || index}`;
     }
 
     function selectedProject(projects) {
       return projects.find((project) => project.id === selectedProjectId);
+    }
+
+    function selectedComponent(project) {
+      if (!project || !selectedComponentId) return null;
+      return (project.components || []).find((component, index) =>
+        componentId(project, component, index) === selectedComponentId
+      );
     }
 
     function visibleProjects(projects) {
@@ -559,6 +632,7 @@
           const project = currentData.projects.find((item) => item.id === projectId);
           if (!project) return;
           selectedProjectId = projectId;
+          selectedComponentId = "";
           currentQuery = "";
           byId("search").value = "";
           render(currentData);
@@ -566,21 +640,22 @@
       });
     }
 
-    function renderProjectOverview(project) {
+    function renderProjectOverview(project, parentProject = null) {
       const overview = project.overview || {};
       const todo = (overview.todo || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
       const done = (overview.done || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
-      const components = (project.components || []).map((component) => `
-        <div class="overview-component">
+      const components = (project.components || []).map((component, index) => `
+        <button class="overview-component" type="button" data-component-id="${escapeHtml(componentId(project, component, index))}">
           <strong>${escapeHtml(component.title)}</strong>
           <span>${escapeHtml(component.text)}</span>
-        </div>
+        </button>
       `).join("");
+      const title = parentProject ? `${parentProject.title}: ${project.title}` : project.title;
       byId("projectCards").innerHTML = `
         <article class="project-card project-overview">
           <div class="project-head">
             <div class="overview-lead">
-              <h3>${escapeHtml(project.title)}</h3>
+              <h3>${escapeHtml(title)}</h3>
               <p>${escapeHtml(overview.summary || project.next || "")}</p>
             </div>
             <span class="status ${escapeHtml(project.statusClass || "ok")}">${escapeHtml(project.status)}</span>
@@ -598,18 +673,31 @@
           </div>
           <div class="meta">
             <span>Momentum: ${escapeHtml(project.momentum)}</span>
-            <span>${project.folder ? `\u041f\u0430\u043f\u043a\u0430: ${escapeHtml(project.folder)}` : "\u041f\u0430\u043f\u043a\u0430: \u043f\u043e\u043a\u0430 \u043d\u0435 \u043d\u0430\u0437\u043d\u0430\u0447\u0435\u043d\u0430"}</span>
+            <span>${project.folder || parentProject?.folder ? `\u041f\u0430\u043f\u043a\u0430: ${escapeHtml(project.folder || parentProject.folder)}` : "\u041f\u0430\u043f\u043a\u0430: \u043f\u043e\u043a\u0430 \u043d\u0435 \u043d\u0430\u0437\u043d\u0430\u0447\u0435\u043d\u0430"}</span>
           </div>
         </article>
       `;
+      byId("projectCards").querySelectorAll("[data-component-id]").forEach((button) => {
+        button.addEventListener("click", () => {
+          selectedComponentId = button.dataset.componentId;
+          currentQuery = "";
+          byId("search").value = "";
+          render(currentData);
+        });
+      });
     }
 
     function renderCards(projects) {
       const parent = selectedProject(currentData.projects || []);
+      const component = selectedComponent(parent);
       byId("projectSectionTitle").textContent = parent
-        ? parent.title
+        ? (component ? `${parent.title}: ${component.title}` : parent.title)
         : `${filterLabels[currentFilter]} \u043f\u0440\u043e\u0435\u043a\u0442\u044b`;
       byId("projectFilters").style.display = parent ? "none" : "flex";
+      if (component?.overview) {
+        renderProjectOverview(component, parent);
+        return;
+      }
       if (parent?.overview) {
         renderProjectOverview(parent);
         return;
@@ -671,6 +759,7 @@
       currentFilter = "active";
       currentQuery = "";
       selectedProjectId = "";
+      selectedComponentId = "";
       byId("search").value = "";
       render(currentData);
     });
