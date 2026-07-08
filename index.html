@@ -528,14 +528,41 @@
       padding: 10px;
     }
     .task-panel-pane.discussion { min-height: 0; margin-top: 12px; }
+    .discussion-composer {
+      display: grid;
+      gap: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      background: white;
+      padding-bottom: 10px;
+    }
     .thread-list {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(var(--thread-columns, 4), minmax(0, 1fr));
       align-content: start;
       gap: 10px;
       min-height: 0;
+      padding-right: 4px;
+    }
+    .model-thread {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 8px;
+      min-width: 0;
+    }
+    .model-thread h4 {
+      margin: 0;
+      font-size: 13px;
+    }
+    .model-thread-body {
+      display: grid;
+      align-content: start;
+      gap: 8px;
+      max-height: 420px;
       overflow: auto;
       padding-right: 4px;
+      scroll-behavior: smooth;
     }
     .thread-message {
       display: grid;
@@ -549,7 +576,6 @@
       padding-left: 9px;
       color: #403b33;
     }
-    .thread-message.user { grid-column: 1 / -1; }
     .thread-message.user { border-left-color: var(--accent); }
     .thread-message.agent { border-left-color: #31547c; }
     .thread-message strong { font-size: 12px; }
@@ -768,17 +794,19 @@
         </div>
       </div>
       <section class="task-panel-pane discussion" id="taskPaneDiscussion">
-        <textarea class="task-message-input" id="taskMessageInput" placeholder="Надиктуй или введи реплику по этой задаче"></textarea>
-        <div class="dialog-tools">
-          <button class="task-action voice-button" type="button" id="taskPanelVoice">Микрофон</button>
-          <button class="task-action agent" type="button" id="taskAskModels">Спросить</button>
-          <div class="model-picker" aria-label="Выбор моделей">
-            <label class="model-choice"><input type="checkbox" name="taskModel" value="ChatGPT" checked>ChatGPT</label>
-            <label class="model-choice"><input type="checkbox" name="taskModel" value="Gemini">Gemini</label>
-            <label class="model-choice"><input type="checkbox" name="taskModel" value="Grok">Grok</label>
-            <label class="model-choice"><input type="checkbox" name="taskModel" value="Hermes">Hermes</label>
+        <div class="discussion-composer">
+          <textarea class="task-message-input" id="taskMessageInput" placeholder="Надиктуй или введи реплику по этой задаче"></textarea>
+          <div class="dialog-tools">
+            <button class="task-action voice-button" type="button" id="taskPanelVoice">Микрофон</button>
+            <button class="task-action agent" type="button" id="taskAskModels">Спросить</button>
+            <div class="model-picker" aria-label="Выбор моделей">
+              <label class="model-choice"><input type="checkbox" name="taskModel" value="ChatGPT" checked>ChatGPT</label>
+              <label class="model-choice"><input type="checkbox" name="taskModel" value="Gemini">Gemini</label>
+              <label class="model-choice"><input type="checkbox" name="taskModel" value="Grok">Grok</label>
+              <label class="model-choice"><input type="checkbox" name="taskModel" value="Hermes">Hermes</label>
+            </div>
+            <button class="task-action archive" type="button" id="taskArchiveThread">Отправить диалог в архив</button>
           </div>
-          <button class="task-action archive" type="button" id="taskArchiveThread">Отправить диалог в архив</button>
         </div>
         <div class="thread-list" id="taskThread"></div>
       </section>
@@ -1167,14 +1195,50 @@
 
     function renderTaskThread(task) {
       const messages = Array.isArray(task.messages) ? task.messages : [];
-      byId("taskThread").innerHTML = messages.length
-        ? messages.map((message) => `
-          <div class="thread-message ${escapeHtml(message.role || "user")}">
-            <strong>${message.role === "agent" ? escapeHtml(message.model || "Агент") : "Я"}</strong>
-            <p>${escapeHtml(message.text || "")}</p>
+      const selectedModels = selectedTaskModels();
+      const usedModels = messages
+        .filter((message) => message.role === "agent" && message.model)
+        .map((message) => message.model);
+      const models = Array.from(new Set([...selectedModels, ...usedModels]));
+      const thread = byId("taskThread");
+      thread.style.setProperty("--thread-columns", Math.max(models.length, 1));
+      if (!messages.length || !models.length) {
+        thread.innerHTML = `<div class="thread-message"><p>Здесь появится рабочий разговор по задаче.</p></div>`;
+        return;
+      }
+
+      const columns = Object.fromEntries(models.map((model) => [model, []]));
+      let currentQuestion = "";
+      messages.forEach((message) => {
+        if (message.role === "user") {
+          currentQuestion = message.text || "";
+          return;
+        }
+        if (message.role !== "agent" || !columns[message.model]) return;
+        if (currentQuestion) {
+          columns[message.model].push({ role: "user", label: "Я", text: currentQuestion });
+        }
+        columns[message.model].push({ role: "agent", label: message.model || "Агент", text: message.text || "" });
+      });
+
+      thread.innerHTML = models.map((model) => `
+        <section class="model-thread">
+          <h4>${escapeHtml(model)}</h4>
+          <div class="model-thread-body">
+            ${(columns[model].length ? columns[model] : [{ role: "agent", label: model, text: "Здесь появится ответ выбранной модели." }]).map((message) => `
+              <div class="thread-message ${escapeHtml(message.role)}">
+                <strong>${escapeHtml(message.label)}</strong>
+                <p>${escapeHtml(message.text)}</p>
+              </div>
+            `).join("")}
           </div>
-        `).join("")
-        : `<div class="thread-message"><p>Здесь появится рабочий разговор по задаче.</p></div>`;
+        </section>
+      `).join("");
+      requestAnimationFrame(() => {
+        thread.querySelectorAll(".model-thread-body").forEach((column) => {
+          column.scrollTop = column.scrollHeight;
+        });
+      });
     }
 
     function renderSummaryResults(task) {
