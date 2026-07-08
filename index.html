@@ -551,9 +551,47 @@
       gap: 8px;
       min-width: 0;
     }
+    .model-thread-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 30px;
+    }
     .model-thread h4 {
       margin: 0;
       font-size: 13px;
+    }
+    .model-focus-button {
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: white;
+      color: #403b33;
+      font-size: 17px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .model-focus-button:hover,
+    .model-focus-button:focus-visible {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .thread-list.focused {
+      grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr);
+      align-items: start;
+    }
+    .model-thread-stack {
+      display: grid;
+      gap: 12px;
+      min-width: 0;
+    }
+    .thread-list.focused > .model-thread .model-thread-body {
+      max-height: 650px;
+    }
+    .model-thread-stack .model-thread-body {
+      max-height: 190px;
     }
     .model-thread-body {
       display: grid;
@@ -668,6 +706,7 @@
       .hero { grid-template-columns: 1fr; }
       .overview-grid, .overview-components { grid-template-columns: 1fr; }
       .task-panel-main { grid-template-columns: 1fr; }
+      .thread-list.focused { grid-template-columns: minmax(0, 3fr) minmax(240px, 2fr); }
     }
     @media (max-width: 760px) {
       .shell { grid-template-rows: auto 1fr; }
@@ -687,6 +726,9 @@
       .project-card { min-height: 0; }
       .project-head { flex-wrap: wrap; }
       .status { white-space: normal; }
+      .thread-list,
+      .thread-list.focused { grid-template-columns: minmax(0, 1fr); }
+      .model-thread-stack { grid-template-columns: minmax(0, 1fr); }
     }
   </style>
 </head>
@@ -1033,6 +1075,7 @@
     let taskDialogContext = null;
     let taskPanelContext = null;
     let taskPanelView = "task";
+    let focusedTaskModel = "";
     let recognition = null;
 
     const byId = (id) => document.getElementById(id);
@@ -1201,7 +1244,9 @@
         .map((message) => message.model);
       const models = Array.from(new Set([...selectedModels, ...usedModels]));
       const thread = byId("taskThread");
+      if (!models.includes(focusedTaskModel)) focusedTaskModel = "";
       thread.style.setProperty("--thread-columns", Math.max(models.length, 1));
+      thread.classList.toggle("focused", Boolean(focusedTaskModel));
       if (!messages.length || !models.length) {
         thread.innerHTML = `<div class="thread-message"><p>Здесь появится рабочий разговор по задаче.</p></div>`;
         return;
@@ -1221,9 +1266,16 @@
         columns[message.model].push({ role: "agent", label: message.model || "Агент", text: message.text || "" });
       });
 
-      thread.innerHTML = models.map((model) => `
-        <section class="model-thread">
-          <h4>${escapeHtml(model)}</h4>
+      const renderModelThread = (model) => `
+        <section class="model-thread" data-model-thread="${escapeHtml(model)}">
+          <div class="model-thread-head">
+            <h4>${escapeHtml(model)}</h4>
+            <button class="model-focus-button" type="button" data-model-focus="${escapeHtml(model)}"
+              aria-label="${focusedTaskModel === model ? "Свернуть" : "Расширить"} ${escapeHtml(model)}"
+              title="${focusedTaskModel === model ? "Вернуть равные колонки" : "Расширить модель"}">
+              ${focusedTaskModel === model ? "↔" : "⛶"}
+            </button>
+          </div>
           <div class="model-thread-body">
             ${(columns[model].length ? columns[model] : [{ role: "agent", label: model, text: "Здесь появится ответ выбранной модели." }]).map((message) => `
               <div class="thread-message ${escapeHtml(message.role)}">
@@ -1233,7 +1285,13 @@
             `).join("")}
           </div>
         </section>
-      `).join("");
+      `;
+      thread.innerHTML = focusedTaskModel
+        ? `${renderModelThread(focusedTaskModel)}
+          <div class="model-thread-stack">
+            ${models.filter((model) => model !== focusedTaskModel).map(renderModelThread).join("")}
+          </div>`
+        : models.map(renderModelThread).join("");
       requestAnimationFrame(() => {
         thread.querySelectorAll(".model-thread-body").forEach((column) => {
           column.scrollTop = column.scrollHeight;
@@ -1281,6 +1339,7 @@
     function openTaskPanel(project, parentProject, index) {
       taskPanelContext = { project, parentProject, index };
       taskPanelView = "task";
+      focusedTaskModel = "";
       refreshTaskPanel();
       byId("taskMessageInput").value = "";
       byId("taskPanelVoice").classList.remove("listening");
@@ -1838,6 +1897,13 @@
     });
     byId("taskPanelVoice").addEventListener("click", () => startVoiceInput("taskMessageInput", "taskPanelVoice"));
     byId("taskAskModels").addEventListener("click", askSelectedModels);
+    byId("taskThread").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-model-focus]");
+      if (!button) return;
+      focusedTaskModel = focusedTaskModel === button.dataset.modelFocus ? "" : button.dataset.modelFocus;
+      const task = currentPanelTask();
+      if (task) renderTaskThread(task);
+    });
     byId("taskPanelEditor").addEventListener("input", () => {
       const task = currentPanelTask();
       byId("taskSaveText").hidden = task ? byId("taskPanelEditor").value.trim() === taskText(task).trim() : true;
