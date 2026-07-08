@@ -2,21 +2,63 @@ $ErrorActionPreference = "Stop"
 
 Set-Location -LiteralPath $PSScriptRoot
 
+$stateDir = Join-Path $env:APPDATA "SolinkWorkspace"
+$logFile = Join-Path $stateDir "publish-log.txt"
+if (-not (Test-Path -LiteralPath $stateDir)) {
+  New-Item -ItemType Directory -Path $stateDir | Out-Null
+}
+
+function Invoke-Git {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string[]]$Arguments
+  )
+
+  & git @Arguments
+  if ($LASTEXITCODE -ne 0) {
+    throw "git $($Arguments -join ' ') failed with exit code $LASTEXITCODE"
+  }
+}
+
+function Invoke-Push {
+  try {
+    Invoke-Git -Arguments @("push", "origin", "main")
+    return
+  } catch {
+    Write-Host ""
+    Write-Host "First push failed. Trying to connect Git to GitHub CLI credentials..."
+    if (Get-Command gh -ErrorAction SilentlyContinue) {
+      & gh auth setup-git
+      if ($LASTEXITCODE -eq 0) {
+        Invoke-Git -Arguments @("push", "origin", "main")
+        return
+      }
+    }
+    throw
+  }
+}
+
+Start-Transcript -LiteralPath $logFile -Force | Out-Null
+
 Write-Host ""
 Write-Host "Solink Workspace publisher"
 Write-Host "Repository: $PSScriptRoot"
+Write-Host "Log: $logFile"
 Write-Host ""
 
-git status --short --branch
+Invoke-Git -Arguments @("status", "--short", "--branch")
 Write-Host ""
 
 $changedFiles = git status --porcelain -- index.html projects.json
+if ($LASTEXITCODE -ne 0) {
+  throw "git status --porcelain failed with exit code $LASTEXITCODE"
+}
 
 if ($changedFiles) {
   Write-Host "Committing changed workspace files..."
-  git add -- index.html projects.json
+  Invoke-Git -Arguments @("add", "--", "index.html", "projects.json")
   $stamp = Get-Date -Format "yyyy-MM-dd HH:mm"
-  git commit -m "Update Solink Workspace $stamp"
+  Invoke-Git -Arguments @("commit", "-m", "Update Solink Workspace $stamp")
   Write-Host ""
 } else {
   Write-Host "No uncommitted changes in index.html or projects.json."
@@ -24,8 +66,18 @@ if ($changedFiles) {
   Write-Host ""
 }
 
-git push origin main
+try {
+  Invoke-Push
 
-Write-Host ""
-Write-Host "Done. GitHub Pages may need a minute to refresh."
-Read-Host "Press Enter to close"
+  Write-Host ""
+  Write-Host "Done. GitHub Pages may need a minute to refresh."
+} catch {
+  Write-Host ""
+  Write-Host "Publish failed:"
+  Write-Host $_
+  Write-Host ""
+  Write-Host "Log saved to: $logFile"
+} finally {
+  Stop-Transcript | Out-Null
+  Read-Host "Press Enter to close"
+}
