@@ -373,7 +373,7 @@
       margin: 8px 0 10px;
     }
     .progress-fill { height: 100%; background: var(--accent); }
-    .task-dialog::backdrop { background: rgba(32, 27, 19, .28); }
+    .task-dialog::backdrop, .task-panel::backdrop { background: rgba(32, 27, 19, .28); }
     .task-dialog {
       width: min(720px, calc(100vw - 28px));
       border: 1px solid var(--line);
@@ -409,6 +409,105 @@
     .dialog-tools { display: flex; gap: 8px; flex-wrap: wrap; }
     .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
     .voice-button.listening { background: #dff0ec; border-color: var(--accent); color: #0f5f55; }
+    .task-panel {
+      width: min(980px, calc(100vw - 28px));
+      max-height: calc(100vh - 28px);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      box-shadow: 0 18px 50px rgba(52, 43, 31, .28);
+      color: var(--text);
+      padding: 0;
+    }
+    .task-panel-body {
+      display: grid;
+      gap: 14px;
+      padding: 16px;
+    }
+    .task-panel-main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 280px;
+      gap: 14px;
+      align-items: start;
+    }
+    .task-focus {
+      display: grid;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+      padding: 12px;
+    }
+    .task-focus h4, .task-side h4, .task-thread h4 { margin: 0; font-size: 14px; }
+    .task-focus-text {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+    .task-context {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .task-side {
+      display: grid;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffaf0;
+      padding: 12px;
+    }
+    .task-summary {
+      min-height: 112px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+      color: var(--text);
+      font: inherit;
+      line-height: 1.45;
+      padding: 10px;
+    }
+    .task-thread {
+      display: grid;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+      padding: 12px;
+    }
+    .thread-list {
+      display: grid;
+      gap: 8px;
+      max-height: 230px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+    .thread-message {
+      display: grid;
+      gap: 4px;
+      border-left: 3px solid var(--line);
+      padding-left: 9px;
+      color: #403b33;
+    }
+    .thread-message.user { border-left-color: var(--accent); }
+    .thread-message.agent { border-left-color: #31547c; }
+    .thread-message strong { font-size: 12px; }
+    .thread-message p { margin: 0; line-height: 1.45; }
+    .task-message-input {
+      min-height: 96px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+      color: var(--text);
+      font: inherit;
+      line-height: 1.45;
+      padding: 10px;
+    }
     .overview-components {
       display: grid;
       grid-template-columns: repeat(2, minmax(240px, 1fr));
@@ -446,6 +545,7 @@
       .rightbar { display: none; }
       .hero { grid-template-columns: 1fr; }
       .overview-grid, .overview-components { grid-template-columns: 1fr; }
+      .task-panel-main { grid-template-columns: 1fr; }
     }
     @media (max-width: 760px) {
       .shell { grid-template-rows: auto 1fr; }
@@ -534,6 +634,42 @@
         <button class="button primary" type="submit" id="taskSave">Сохранить</button>
       </div>
     </form>
+  </dialog>
+  <dialog class="task-panel" id="taskPanel">
+    <div class="task-panel-body">
+      <div class="dialog-head">
+        <h3 id="taskPanelTitle">Задача</h3>
+        <button class="dialog-close" type="button" id="taskPanelClose" aria-label="Закрыть">×</button>
+      </div>
+      <div class="task-panel-main">
+        <div class="task-focus">
+          <div class="task-context">
+            <span id="taskPanelPath"></span>
+            <span class="task-status draft" id="taskPanelStatus">Черновик</span>
+          </div>
+          <p class="task-focus-text" id="taskPanelText"></p>
+        </div>
+        <aside class="task-side">
+          <h4>Рабочий итог</h4>
+          <textarea class="task-summary" id="taskSummary" placeholder="Здесь будет краткий итог обсуждения"></textarea>
+          <button class="task-action" type="button" id="taskDraftSummary">Сформулировать итог</button>
+          <button class="task-action done" type="button" id="taskApplySummary">Обновить задачу из итога</button>
+        </aside>
+      </div>
+      <section class="task-thread">
+        <h4>Обсуждение</h4>
+        <div class="thread-list" id="taskThread"></div>
+        <textarea class="task-message-input" id="taskMessageInput" placeholder="Надиктуй или введи реплику по этой задаче"></textarea>
+        <div class="dialog-tools">
+          <button class="task-action voice-button" type="button" id="taskPanelVoice">Микрофон</button>
+          <button class="task-action" type="button" id="taskAddMessage">Добавить реплику</button>
+          <button class="task-action agent" type="button" id="taskAskAgent">Агенту</button>
+        </div>
+      </section>
+      <div class="dialog-actions">
+        <button class="button" type="button" id="taskPanelCancel">Закрыть</button>
+      </div>
+    </div>
   </dialog>
   <script>
     const fallbackData = {
@@ -754,6 +890,7 @@
     let selectedProjectId = "";
     let selectedComponentId = "";
     let taskDialogContext = null;
+    let taskPanelContext = null;
     let recognition = null;
 
     const byId = (id) => document.getElementById(id);
@@ -790,16 +927,26 @@
       return `solink.overview.${parentProject?.id || "root"}.${project.id || project.title}`;
     }
 
+    function createTaskId() {
+      return `task-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    }
+
     function makeTask(value, status = "draft") {
       if (typeof value === "object" && value && "text" in value) {
         return {
+          id: value.id || createTaskId(),
           text: String(value.text || ""),
-          status: value.status || status
+          status: value.status || status,
+          messages: Array.isArray(value.messages) ? value.messages : [],
+          summary: String(value.summary || "")
         };
       }
       return {
+        id: createTaskId(),
         text: String(value || ""),
-        status
+        status,
+        messages: [],
+        summary: ""
       };
     }
 
@@ -886,7 +1033,104 @@
       closeTaskDialog();
     }
 
-    function startVoiceInput() {
+    function taskPath(project, parentProject = null) {
+      return parentProject ? `${parentProject.title} / ${project.title}` : project.title;
+    }
+
+    function currentPanelTask() {
+      if (!taskPanelContext) return null;
+      const state = overviewState(taskPanelContext.project, taskPanelContext.parentProject);
+      return state.todo[taskPanelContext.index] || null;
+    }
+
+    function renderTaskThread(task) {
+      const messages = Array.isArray(task.messages) ? task.messages : [];
+      byId("taskThread").innerHTML = messages.length
+        ? messages.map((message) => `
+          <div class="thread-message ${escapeHtml(message.role || "user")}">
+            <strong>${message.role === "agent" ? "Агент" : "Я"}</strong>
+            <p>${escapeHtml(message.text || "")}</p>
+          </div>
+        `).join("")
+        : `<div class="thread-message"><p>Здесь появится рабочий разговор по задаче.</p></div>`;
+    }
+
+    function refreshTaskPanel() {
+      const task = currentPanelTask();
+      if (!task || !taskPanelContext) return;
+      const status = task.status || "draft";
+      byId("taskPanelTitle").textContent = "Задача";
+      byId("taskPanelPath").textContent = taskPath(taskPanelContext.project, taskPanelContext.parentProject);
+      byId("taskPanelText").textContent = taskText(task);
+      byId("taskSummary").value = task.summary || "";
+      const statusNode = byId("taskPanelStatus");
+      statusNode.textContent = taskStatusLabels[status] || "Черновик";
+      statusNode.className = `task-status ${status}`;
+      renderTaskThread(task);
+    }
+
+    function openTaskPanel(project, parentProject, index) {
+      taskPanelContext = { project, parentProject, index };
+      refreshTaskPanel();
+      byId("taskMessageInput").value = "";
+      byId("taskPanelVoice").classList.remove("listening");
+      byId("taskPanel").showModal();
+      byId("taskMessageInput").focus();
+    }
+
+    function closeTaskPanel() {
+      if (recognition) recognition.stop();
+      byId("taskPanelVoice").classList.remove("listening");
+      byId("taskPanel").close();
+      taskPanelContext = null;
+    }
+
+    function addTaskPanelMessage(role = "user", rawText = "") {
+      if (!taskPanelContext) return;
+      const text = normalizeTaskText(rawText || byId("taskMessageInput").value);
+      if (!text) return;
+      const { project, parentProject, index } = taskPanelContext;
+      mutateOverviewState(project, parentProject, (draft) => {
+        const item = draft.todo[index];
+        if (!item) return;
+        item.messages = Array.isArray(item.messages) ? item.messages : [];
+        item.messages.push({
+          role,
+          text,
+          createdAt: new Date().toISOString()
+        });
+      });
+      taskPanelContext = { project, parentProject, index };
+      byId("taskMessageInput").value = "";
+      refreshTaskPanel();
+    }
+
+    function draftTaskSummary() {
+      const task = currentPanelTask();
+      if (!task) return;
+      const latest = Array.isArray(task.messages) && task.messages.length
+        ? task.messages[task.messages.length - 1].text
+        : "";
+      const parts = [taskText(task), latest].filter(Boolean);
+      byId("taskSummary").value = normalizeTaskText(parts.join(". "));
+    }
+
+    function saveTaskSummary(applyToText = false) {
+      if (!taskPanelContext) return;
+      const summary = normalizeTaskText(byId("taskSummary").value);
+      if (!summary) return;
+      const { project, parentProject, index } = taskPanelContext;
+      mutateOverviewState(project, parentProject, (draft) => {
+        const item = draft.todo[index];
+        if (!item) return;
+        item.summary = summary;
+        if (applyToText) item.text = summary;
+      });
+      taskPanelContext = { project, parentProject, index };
+      refreshTaskPanel();
+    }
+
+    function startVoiceInput(targetId = "taskEditor", buttonId = "voiceButton") {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
         alert("В этом браузере микрофон для диктовки недоступен.");
@@ -896,16 +1140,16 @@
       recognition.lang = "ru-RU";
       recognition.interimResults = true;
       recognition.continuous = true;
-      byId("voiceButton").classList.add("listening");
+      byId(buttonId).classList.add("listening");
       recognition.onresult = (event) => {
         let text = "";
         for (let index = 0; index < event.results.length; index += 1) {
           text += event.results[index][0].transcript;
         }
-        byId("taskEditor").value = normalizeTaskText(text);
+        byId(targetId).value = normalizeTaskText(text);
       };
-      recognition.onend = () => byId("voiceButton").classList.remove("listening");
-      recognition.onerror = () => byId("voiceButton").classList.remove("listening");
+      recognition.onend = () => byId(buttonId).classList.remove("listening");
+      recognition.onerror = () => byId(buttonId).classList.remove("listening");
       recognition.start();
     }
 
@@ -1002,6 +1246,7 @@
             <span class="task-actions">
               <button class="task-action task-menu-button" type="button" data-task-action="menu" data-task-index="${index}" aria-label="Меню задачи">...</button>
               <span class="task-menu" data-task-menu="${index}" hidden>
+                <button class="task-action" type="button" data-task-action="open" data-task-index="${index}">Открыть задачу</button>
                 <button class="task-action" type="button" data-task-action="edit" data-task-index="${index}">Редактировать</button>
                 <button class="task-action agent" type="button" data-task-action="agent" data-task-index="${index}">Агенту</button>
                 <button class="task-action done" type="button" data-task-action="done" data-task-index="${index}">Готово</button>
@@ -1093,6 +1338,10 @@
                 }
               }, { once: true });
             }, 0);
+            return;
+          }
+          if (action === "open") {
+            openTaskPanel(project, parentProject, index);
             return;
           }
           if (action === "edit") {
@@ -1242,11 +1491,36 @@
 
     byId("taskDialogClose").addEventListener("click", closeTaskDialog);
     byId("taskCancel").addEventListener("click", closeTaskDialog);
-    byId("voiceButton").addEventListener("click", startVoiceInput);
+    byId("voiceButton").addEventListener("click", () => startVoiceInput());
     byId("polishButton").addEventListener("click", () => {
       byId("taskEditor").value = normalizeTaskText(byId("taskEditor").value);
       byId("taskEditor").focus();
     });
+    byId("taskPanelClose").addEventListener("click", closeTaskPanel);
+    byId("taskPanelCancel").addEventListener("click", closeTaskPanel);
+    byId("taskPanelVoice").addEventListener("click", () => startVoiceInput("taskMessageInput", "taskPanelVoice"));
+    byId("taskAddMessage").addEventListener("click", () => addTaskPanelMessage("user"));
+    byId("taskAskAgent").addEventListener("click", () => {
+      addTaskPanelMessage("user");
+      if (!taskPanelContext) return;
+      const { project, parentProject, index } = taskPanelContext;
+      mutateOverviewState(project, parentProject, (draft) => {
+        const item = draft.todo[index];
+        if (!item) return;
+        item.status = "sent";
+        item.messages = Array.isArray(item.messages) ? item.messages : [];
+        item.messages.push({
+          role: "agent",
+          text: "Заявка агенту подготовлена. Здесь позже появится ответ Hermes или выбранной нейросети.",
+          createdAt: new Date().toISOString()
+        });
+      });
+      taskPanelContext = { project, parentProject, index };
+      refreshTaskPanel();
+    });
+    byId("taskDraftSummary").addEventListener("click", draftTaskSummary);
+    byId("taskSummary").addEventListener("change", () => saveTaskSummary(false));
+    byId("taskApplySummary").addEventListener("click", () => saveTaskSummary(true));
 
     fetch("projects.json", { cache: "no-store" })
       .then((response) => response.ok ? response.json() : Promise.reject(new Error("projects.json not found")))
