@@ -189,6 +189,47 @@
     .component-item { display: grid; gap: 2px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: #fffaf0; }
     .component-item strong { font-size: 13px; }
     .component-item span { color: var(--muted); font-size: 12px; }
+    .project-overview {
+      grid-column: 1 / -1;
+      min-height: 0;
+      display: grid;
+      gap: 14px;
+      padding: 16px;
+    }
+    .overview-lead {
+      display: grid;
+      gap: 8px;
+      max-width: 980px;
+    }
+    .overview-lead h3 { margin: 0; font-size: 22px; }
+    .overview-lead p { margin: 0; color: #39352d; line-height: 1.5; }
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(260px, 1fr));
+      gap: 12px;
+    }
+    .overview-column {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffaf0;
+      padding: 12px;
+    }
+    .overview-column h4 { margin: 0 0 10px; font-size: 16px; }
+    .overview-column ul { margin: 0; padding-left: 18px; display: grid; gap: 8px; }
+    .overview-column li { color: #383229; line-height: 1.35; }
+    .overview-components {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(240px, 1fr));
+      gap: 10px;
+    }
+    .overview-component {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: white;
+    }
+    .overview-component strong { display: block; margin-bottom: 5px; font-size: 15px; }
+    .overview-component span { color: var(--muted); line-height: 1.4; }
     .meta { display: grid; gap: 6px; margin-top: auto; color: var(--muted); font-size: 12px; }
     .actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .button {
@@ -207,6 +248,7 @@
       .layout { grid-template-columns: 220px 1fr; }
       .rightbar { display: none; }
       .hero { grid-template-columns: 1fr; }
+      .overview-grid, .overview-components { grid-template-columns: 1fr; }
     }
     @media (max-width: 760px) {
       .shell { grid-template-rows: auto 1fr; }
@@ -310,16 +352,40 @@
                       "statusClass": "ok",
                       "momentum": "высокий",
                       "folder": "C:\\Users\\solin\\Documents\\WebLinker",
-                      "next": "Свести Board и Catalog в одну карту проекта: что уже работает, что требует агента, какой следующий шаг.",
+                      "next": "Оформить WebLinker как единый продукт: Board для ручной визуальной работы, Catalog для больших библиотек ссылок и Reader для чтения подборок.",
                       "primaryLink": "",
+                      "overview": {
+                            "summary": "WebLinker - личная визуальная библиотека сайтов, ссылок, подборок и рабочих материалов. Board и Catalog не заменяют друг друга: Board отвечает за свободную раскладку важных объектов, Catalog - за большие массивы данных, импорт, поиск и обогащение.",
+                            "todoTitle": "Что нужно сделать",
+                            "doneTitle": "Что уже сделано",
+                            "todo": [
+                                  "Зафиксировать единую модель данных: библиотечная запись, размещение на доске, раздел каталога, теги и метаданные.",
+                                  "Определить физический следующий проект: развивать связку на текущих прототипах или создать отдельный weblinker-next.",
+                                  "Сделать безопасную рабочую копию WebLinker и Web1Node перед объединением.",
+                                  "Выбрать главный экран Catalog и перестать распылять развитие между пробниками Reader.",
+                                  "Сделать надежное сохранение Catalog в файл проекта и резервные копии, а не только автосохранение браузера.",
+                                  "Спроектировать переходы Board -> Catalog -> Reader: отправить карточку на доску, открыть подборку, найти объект во всей библиотеке.",
+                                  "Подготовить чистый демонстрационный набор без личных OneNote-данных."
+                            ],
+                            "done": [
+                                  "Board уже существует как рабочий браузерный редактор с Stable 1.0.0.",
+                                  "Experimental 0.7.3 содержит развитие доски, расширение Edge, импорт/экспорт JSON и автономный HTML.",
+                                  "Созданы браузерные расширения для захвата материалов и отдельная Firefox-ветка.",
+                                  "Catalog/Web1Node доказал импорт OneNote/MHT/ONEPKG в компактный каталог.",
+                                  "В Catalog собрано около 71 раздела и 8639 карточек, включая YouTube, web, shopping, maps и dzen.",
+                                  "Есть Reader-экраны для просмотра больших подборок и локальный Catalog Editor.",
+                                  "Есть Python-инструменты импорта, анализа и обогащения YouTube/веб-метаданных.",
+                                  "Есть архитектурная карта WebLinker и принцип: Board, Catalog и Reader - представления одной будущей библиотеки."
+                            ]
+                      },
                       "components": [
                             {
                                   "title": "Board",
-                                  "text": "Рабочая доска WebLinker и операционный слой проекта."
+                                  "text": "Свободная визуальная доска для важных сайтов, карточек, групп, захватов из браузера и ручной композиции."
                             },
                             {
                                   "title": "Catalog",
-                                  "text": "Каталог сайтов, карточки, обогащение данных и расширения."
+                                  "text": "Большая библиотека ссылок, OneNote-импорт, Reader, поиск, разделы, YouTube-данные и будущий редактор массовых коллекций."
                             }
                       ],
                       "actions": []
@@ -500,12 +566,54 @@
       });
     }
 
+    function renderProjectOverview(project) {
+      const overview = project.overview || {};
+      const todo = (overview.todo || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+      const done = (overview.done || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+      const components = (project.components || []).map((component) => `
+        <div class="overview-component">
+          <strong>${escapeHtml(component.title)}</strong>
+          <span>${escapeHtml(component.text)}</span>
+        </div>
+      `).join("");
+      byId("projectCards").innerHTML = `
+        <article class="project-card project-overview">
+          <div class="project-head">
+            <div class="overview-lead">
+              <h3>${escapeHtml(project.title)}</h3>
+              <p>${escapeHtml(overview.summary || project.next || "")}</p>
+            </div>
+            <span class="status ${escapeHtml(project.statusClass || "ok")}">${escapeHtml(project.status)}</span>
+          </div>
+          ${components ? `<div class="overview-components">${components}</div>` : ""}
+          <div class="overview-grid">
+            <section class="overview-column">
+              <h4>${escapeHtml(overview.todoTitle || "\u0427\u0442\u043e \u0441\u0434\u0435\u043b\u0430\u0442\u044c")}</h4>
+              <ul>${todo}</ul>
+            </section>
+            <section class="overview-column">
+              <h4>${escapeHtml(overview.doneTitle || "\u0427\u0442\u043e \u0443\u0436\u0435 \u0441\u0434\u0435\u043b\u0430\u043d\u043e")}</h4>
+              <ul>${done}</ul>
+            </section>
+          </div>
+          <div class="meta">
+            <span>Momentum: ${escapeHtml(project.momentum)}</span>
+            <span>${project.folder ? `\u041f\u0430\u043f\u043a\u0430: ${escapeHtml(project.folder)}` : "\u041f\u0430\u043f\u043a\u0430: \u043f\u043e\u043a\u0430 \u043d\u0435 \u043d\u0430\u0437\u043d\u0430\u0447\u0435\u043d\u0430"}</span>
+          </div>
+        </article>
+      `;
+    }
+
     function renderCards(projects) {
       const parent = selectedProject(currentData.projects || []);
       byId("projectSectionTitle").textContent = parent
-        ? `${parent.title}: \u043f\u043e\u0434\u043f\u0440\u043e\u0435\u043a\u0442\u044b`
+        ? parent.title
         : `${filterLabels[currentFilter]} \u043f\u0440\u043e\u0435\u043a\u0442\u044b`;
       byId("projectFilters").style.display = parent ? "none" : "flex";
+      if (parent?.overview) {
+        renderProjectOverview(parent);
+        return;
+      }
       if (!projects.length) {
         byId("projectCards").innerHTML = `<article class="project-card"><div class="next">\u041f\u043e \u044d\u0442\u043e\u043c\u0443 \u0440\u0430\u0437\u0434\u0435\u043b\u0443 \u043f\u043e\u043a\u0430 \u043d\u0438\u0447\u0435\u0433\u043e \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e.</div></article>`;
         return;
