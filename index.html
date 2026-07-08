@@ -528,6 +528,25 @@
       gap: 10px;
       flex-wrap: wrap;
     }
+    .model-picker {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .model-choice {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: white;
+      color: #302b22;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 6px 8px;
+    }
+    .model-choice input { accent-color: var(--accent); }
     .overview-components {
       display: grid;
       grid-template-columns: repeat(2, minmax(240px, 1fr));
@@ -694,7 +713,13 @@
         <textarea class="task-message-input" id="taskMessageInput" placeholder="Надиктуй или введи реплику по этой задаче"></textarea>
         <div class="dialog-tools">
           <button class="task-action voice-button" type="button" id="taskPanelVoice">Микрофон</button>
-          <button class="task-action" type="button" id="taskAddMessage">Сохранить реплику</button>
+          <button class="task-action agent" type="button" id="taskAskModels">Спросить</button>
+          <div class="model-picker" aria-label="Выбор моделей">
+            <label class="model-choice"><input type="checkbox" name="taskModel" value="ChatGPT" checked>ChatGPT</label>
+            <label class="model-choice"><input type="checkbox" name="taskModel" value="Gemini">Gemini</label>
+            <label class="model-choice"><input type="checkbox" name="taskModel" value="Grok">Grok</label>
+            <label class="model-choice"><input type="checkbox" name="taskModel" value="Hermes">Hermes</label>
+          </div>
         </div>
       </section>
       <div class="dialog-actions">
@@ -1082,7 +1107,7 @@
       byId("taskThread").innerHTML = messages.length
         ? messages.map((message) => `
           <div class="thread-message ${escapeHtml(message.role || "user")}">
-            <strong>${message.role === "agent" ? "Агент" : "Я"}</strong>
+            <strong>${message.role === "agent" ? escapeHtml(message.model || "Агент") : "Я"}</strong>
             <p>${escapeHtml(message.text || "")}</p>
           </div>
         `).join("")
@@ -1164,7 +1189,44 @@
         item.messages = [];
       });
       taskPanelContext = { project, parentProject, index };
-      if (applyToText) taskPanelView = "task";
+      refreshTaskPanel();
+    }
+
+    function selectedTaskModels() {
+      return Array.from(byId("taskPanel").querySelectorAll("input[name='taskModel']:checked"))
+        .map((item) => item.value);
+    }
+
+    function askSelectedModels() {
+      if (!taskPanelContext) return;
+      const text = normalizeTaskText(byId("taskMessageInput").value);
+      if (!text) return;
+      const models = selectedTaskModels();
+      if (!models.length) {
+        alert("Выбери хотя бы одну модель.");
+        return;
+      }
+      const { project, parentProject, index } = taskPanelContext;
+      mutateOverviewState(project, parentProject, (draft) => {
+        const item = draft.todo[index];
+        if (!item) return;
+        item.messages = Array.isArray(item.messages) ? item.messages : [];
+        item.messages.push({
+          role: "user",
+          text,
+          createdAt: new Date().toISOString()
+        });
+        models.forEach((model) => {
+          item.messages.push({
+            role: "agent",
+            model,
+            text: `${model}: ответ будет здесь после подключения Hermes/OpenRouter.`,
+            createdAt: new Date().toISOString()
+          });
+        });
+      });
+      taskPanelContext = { project, parentProject, index };
+      byId("taskMessageInput").value = "";
       refreshTaskPanel();
     }
 
@@ -1194,6 +1256,12 @@
     }
 
     function startVoiceInput(targetId = "taskEditor", buttonId = "voiceButton") {
+      if (recognition) {
+        recognition.stop();
+        recognition = null;
+        byId(buttonId).classList.remove("listening");
+        return;
+      }
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
         alert("В этом браузере микрофон для диктовки недоступен.");
@@ -1211,8 +1279,14 @@
         }
         byId(targetId).value = normalizeTaskText(text);
       };
-      recognition.onend = () => byId(buttonId).classList.remove("listening");
-      recognition.onerror = () => byId(buttonId).classList.remove("listening");
+      recognition.onend = () => {
+        byId(buttonId).classList.remove("listening");
+        recognition = null;
+      };
+      recognition.onerror = () => {
+        byId(buttonId).classList.remove("listening");
+        recognition = null;
+      };
       recognition.start();
     }
 
@@ -1565,9 +1639,8 @@
       button.addEventListener("click", () => setTaskPanelView(button.dataset.taskPanelView));
     });
     byId("taskPanelVoice").addEventListener("click", () => startVoiceInput("taskMessageInput", "taskPanelVoice"));
-    byId("taskAddMessage").addEventListener("click", () => addTaskPanelMessage("user"));
+    byId("taskAskModels").addEventListener("click", askSelectedModels);
     byId("taskAskAgent").addEventListener("click", () => {
-      addTaskPanelMessage("user");
       if (!taskPanelContext) return;
       const { project, parentProject, index } = taskPanelContext;
       mutateOverviewState(project, parentProject, (draft) => {
