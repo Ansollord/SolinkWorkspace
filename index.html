@@ -530,7 +530,7 @@
     .task-panel-pane.discussion { min-height: 0; margin-top: 12px; }
     .thread-list {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       align-content: start;
       gap: 10px;
       min-height: 0;
@@ -541,6 +541,11 @@
       display: grid;
       gap: 4px;
       border-left: 3px solid var(--line);
+      border: 1px solid var(--line);
+      border-left-width: 3px;
+      border-radius: 8px;
+      background: white;
+      padding: 10px;
       padding-left: 9px;
       color: #403b33;
     }
@@ -1296,10 +1301,20 @@
         .map((item) => item.value);
     }
 
+    function demoModelAnswer(model, text) {
+      const answers = {
+        ChatGPT: "Разложил бы это как рабочую задачу: сначала уточнить цель, затем зафиксировать минимальный результат и критерий готовности.",
+        Gemini: "Я бы посмотрел на это шире: какие данные уже есть, где слабое место процесса и какой следующий шаг даст максимум ясности.",
+        Grok: "Коротко: не усложнять. Берем один проверяемый шаг, делаем его видимым в интерфейсе и только потом подключаем автоматику.",
+        Hermes: "Маршрут для агента: принять формулировку, выделить действие, результат, входные данные и вернуть структурированный черновик."
+      };
+      return `${model}: ${answers[model] || "Демонстрационный ответ модели."} Исходная реплика: «${text}»`;
+    }
+
     function askSelectedModels() {
       if (!taskPanelContext) return;
-      const text = normalizeTaskText(byId("taskMessageInput").value);
-      if (!text) return;
+      const text = normalizeTaskText(byId("taskMessageInput").value)
+        || "Семь раз отмерь, один раз отрежь: сначала проверяем форму обсуждения, потом подключаем настоящие модели.";
       const models = selectedTaskModels();
       if (!models.length) {
         alert("Выбери хотя бы одну модель.");
@@ -1319,7 +1334,7 @@
           item.messages.push({
             role: "agent",
             model,
-            text: `${model}: ответ будет здесь после подключения Hermes/OpenRouter.`,
+            text: demoModelAnswer(model, text),
             createdAt: new Date().toISOString()
           });
         });
