@@ -451,6 +451,7 @@
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
+      align-items: center;
     }
     .task-panel-tab {
       border: 1px solid var(--line);
@@ -467,6 +468,11 @@
       background: var(--accent);
       border-color: var(--accent);
       color: white;
+    }
+    .task-back-button {
+      margin-left: auto;
+      min-width: 38px;
+      padding-inline: 12px;
     }
     .task-panel-pane {
       display: grid;
@@ -521,7 +527,7 @@
       line-height: 1.45;
       padding: 10px;
     }
-    .task-panel-pane.discussion { min-height: 0; }
+    .task-panel-pane.discussion { min-height: 0; margin-top: 12px; }
     .thread-list {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
@@ -722,15 +728,11 @@
   </dialog>
   <section class="task-panel" id="taskPanel" hidden>
     <div class="task-panel-body">
-      <div class="dialog-head">
-        <h3 id="taskPanelTitle">Задача</h3>
-        <button class="dialog-close" type="button" id="taskPanelClose" aria-label="Назад">Назад</button>
-      </div>
       <div class="task-panel-main">
         <div class="task-panel-tabs">
           <button class="task-panel-tab active" type="button" data-task-panel-view="task">Задача</button>
           <button class="task-panel-tab" type="button" data-task-panel-view="summary">Рабочий итог</button>
-          <button class="task-panel-tab" type="button" data-task-panel-view="discussion">Обсуждение</button>
+          <button class="dialog-close task-back-button" type="button" id="taskPanelClose" aria-label="Назад">←</button>
         </div>
         <div class="task-panel-pane" id="taskPaneTask">
           <div class="task-context">
@@ -759,7 +761,8 @@
             <button class="task-action done" type="button" id="taskApplySummary">Обновить задачу из итога</button>
           </div>
         </div>
-        <section class="task-panel-pane discussion" id="taskPaneDiscussion" hidden>
+      </div>
+      <section class="task-panel-pane discussion" id="taskPaneDiscussion">
         <textarea class="task-message-input" id="taskMessageInput" placeholder="Надиктуй или введи реплику по этой задаче"></textarea>
         <div class="dialog-tools">
           <button class="task-action voice-button" type="button" id="taskPanelVoice">Микрофон</button>
@@ -774,10 +777,6 @@
         </div>
         <div class="thread-list" id="taskThread"></div>
       </section>
-      </div>
-      <div class="dialog-actions">
-        <button class="button" type="button" id="taskPanelCancel">Назад</button>
-      </div>
     </div>
   </section>
   <script>
@@ -1186,21 +1185,18 @@
     }
 
     function setTaskPanelView(view) {
-      taskPanelView = ["summary", "discussion"].includes(view) ? view : "task";
+      taskPanelView = view === "summary" ? "summary" : "task";
       byId("taskPaneTask").hidden = taskPanelView !== "task";
       byId("taskPaneSummary").hidden = taskPanelView !== "summary";
-      byId("taskPaneDiscussion").hidden = taskPanelView !== "discussion";
       byId("taskPanel").querySelectorAll("[data-task-panel-view]").forEach((button) => {
         button.classList.toggle("active", button.dataset.taskPanelView === taskPanelView);
       });
-      if (taskPanelView === "discussion") byId("taskMessageInput").focus();
     }
 
     function refreshTaskPanel() {
       const task = currentPanelTask();
       if (!task || !taskPanelContext) return;
       const status = task.status || "draft";
-      byId("taskPanelTitle").textContent = "Задача";
       byId("taskPanelPath").textContent = taskPath(taskPanelContext.project, taskPanelContext.parentProject);
       byId("taskPanelEditor").value = taskText(task);
       byId("taskSaveText").hidden = true;
@@ -1222,7 +1218,7 @@
       const panel = byId("taskPanel");
       panel.hidden = false;
       byId("projectCards").replaceChildren(panel);
-      byId("projectSectionTitle").textContent = "Задача";
+      byId("projectSectionTitle").textContent = "";
       byId("projectFilters").style.display = "none";
       byId("taskPanelEditor").focus();
     }
@@ -1758,7 +1754,6 @@
       byId("taskEditor").focus();
     });
     byId("taskPanelClose").addEventListener("click", closeTaskPanel);
-    byId("taskPanelCancel").addEventListener("click", closeTaskPanel);
     byId("taskPanel").querySelectorAll("[data-task-panel-view]").forEach((button) => {
       button.addEventListener("click", () => setTaskPanelView(button.dataset.taskPanelView));
     });
