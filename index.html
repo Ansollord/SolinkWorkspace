@@ -257,6 +257,10 @@
       align-items: start;
     }
     .task-grip {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1px;
+      width: 30px;
       border: 1px solid var(--line);
       border-radius: 5px;
       background: white;
@@ -265,10 +269,23 @@
       font: inherit;
       font-weight: 800;
       line-height: 1;
-      padding: 4px 6px;
+      padding: 2px;
       touch-action: none;
     }
     .task-grip:active { cursor: grabbing; }
+    .task-move {
+      border: 0;
+      border-radius: 3px;
+      background: transparent;
+      color: #302b22;
+      cursor: pointer;
+      font: inherit;
+      font-size: 11px;
+      font-weight: 900;
+      line-height: 1;
+      padding: 2px 0;
+    }
+    .task-move:hover { background: #f4eadb; }
     .task-text { min-width: 0; }
     .task-status {
       display: inline-flex;
@@ -286,7 +303,7 @@
     .task-status.review { background: #dff0ec; color: #0f5f55; }
     .task-status.done { background: #dff0ec; color: #0f5f55; }
     .task-status.archive { background: #ece6da; color: #695f51; }
-    .task-actions { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
+    .task-actions { position: relative; display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
     .task-action {
       border: 1px solid var(--line);
       border-radius: 5px;
@@ -301,6 +318,36 @@
     .task-action.done { background: #dff0ec; color: #0f5f55; }
     .task-action.agent { background: #e8edf7; color: #31547c; }
     .task-action.archive { background: #ece6da; color: #695f51; }
+    .task-menu-button {
+      min-width: 30px;
+      border-radius: 6px;
+      font-size: 16px;
+      line-height: 1;
+      padding: 4px 7px;
+    }
+    .task-menu {
+      position: absolute;
+      top: 28px;
+      right: 0;
+      z-index: 5;
+      display: grid;
+      min-width: 150px;
+      gap: 4px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+      box-shadow: 0 12px 26px rgba(52, 43, 31, .18);
+      padding: 6px;
+    }
+    .task-menu[hidden] { display: none; }
+    .task-menu .task-action {
+      width: 100%;
+      text-align: left;
+      border: 0;
+      background: transparent;
+      padding: 7px 8px;
+    }
+    .task-menu .task-action:hover { background: #fffaf0; }
     .task-item.dragging { opacity: .55; }
     .task-list.drag-over { outline: 2px dashed rgba(17, 119, 103, .35); outline-offset: 4px; }
     .indicator-list {
@@ -944,18 +991,22 @@
       const todo = state.todo.map((item, index) => `
         <li draggable="true" data-task-index="${index}">
           <div class="task-item">
-            <button class="task-grip" type="button" aria-label="Переместить задачу">☰</button>
+            <span class="task-grip" role="button" tabindex="0" aria-label="Переместить задачу">
+              <button class="task-move" type="button" data-task-action="up" data-task-index="${index}" aria-label="Выше">↑</button>
+              <button class="task-move" type="button" data-task-action="down" data-task-index="${index}" aria-label="Ниже">↓</button>
+            </span>
             <span class="task-text">
               <span class="task-status ${escapeHtml(item.status || "draft")}">${escapeHtml(taskStatusLabels[item.status || "draft"] || "Черновик")}</span>
               ${escapeHtml(taskText(item))}
             </span>
             <span class="task-actions">
-              <button class="task-action" type="button" data-task-action="edit" data-task-index="${index}">Ред.</button>
-              <button class="task-action" type="button" data-task-action="up" data-task-index="${index}">↑</button>
-              <button class="task-action" type="button" data-task-action="down" data-task-index="${index}">↓</button>
-              <button class="task-action agent" type="button" data-task-action="agent" data-task-index="${index}">Агенту</button>
-              <button class="task-action done" type="button" data-task-action="done" data-task-index="${index}">Готово</button>
-              <button class="task-action archive" type="button" data-task-action="archive" data-task-index="${index}">Архив</button>
+              <button class="task-action task-menu-button" type="button" data-task-action="menu" data-task-index="${index}" aria-label="Меню задачи">...</button>
+              <span class="task-menu" data-task-menu="${index}" hidden>
+                <button class="task-action" type="button" data-task-action="edit" data-task-index="${index}">Редактировать</button>
+                <button class="task-action agent" type="button" data-task-action="agent" data-task-index="${index}">Агенту</button>
+                <button class="task-action done" type="button" data-task-action="done" data-task-index="${index}">Готово</button>
+                <button class="task-action archive" type="button" data-task-action="archive" data-task-index="${index}">Архив</button>
+              </span>
             </span>
           </div>
         </li>
@@ -1029,6 +1080,21 @@
         button.addEventListener("click", () => {
           const index = Number(button.dataset.taskIndex);
           const action = button.dataset.taskAction;
+          if (action === "menu") {
+            byId("projectCards").querySelectorAll(".task-menu").forEach((menu) => {
+              if (menu.dataset.taskMenu !== String(index)) menu.hidden = true;
+            });
+            const menu = byId("projectCards").querySelector(`[data-task-menu="${index}"]`);
+            if (menu) menu.hidden = !menu.hidden;
+            setTimeout(() => {
+              document.addEventListener("click", (event) => {
+                if (!event.target.closest(".task-actions")) {
+                  byId("projectCards")?.querySelectorAll(".task-menu").forEach((item) => { item.hidden = true; });
+                }
+              }, { once: true });
+            }, 0);
+            return;
+          }
           if (action === "edit") {
             openTaskDialog(project, parentProject, "edit", index);
             return;
