@@ -478,7 +478,7 @@
     }
     .task-panel-pane[hidden] { display: none; }
     .task-panel-pane.summary { background: #fffaf0; }
-    .task-panel-pane h4, .task-thread h4 { margin: 0; font-size: 14px; }
+    .task-panel-pane h4 { margin: 0; font-size: 14px; }
     .task-focus-text {
       margin: 0;
       font-size: 18px;
@@ -521,15 +521,7 @@
       line-height: 1.45;
       padding: 10px;
     }
-    .task-thread {
-      display: grid;
-      gap: 10px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: white;
-      padding: 12px;
-      min-height: 0;
-    }
+    .task-panel-pane.discussion { min-height: 0; }
     .thread-list {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
@@ -738,6 +730,7 @@
         <div class="task-panel-tabs">
           <button class="task-panel-tab active" type="button" data-task-panel-view="task">Задача</button>
           <button class="task-panel-tab" type="button" data-task-panel-view="summary">Рабочий итог</button>
+          <button class="task-panel-tab" type="button" data-task-panel-view="discussion">Обсуждение</button>
         </div>
         <div class="task-panel-pane" id="taskPaneTask">
           <div class="task-context">
@@ -766,13 +759,7 @@
             <button class="task-action done" type="button" id="taskApplySummary">Обновить задачу из итога</button>
           </div>
         </div>
-      </div>
-      <section class="task-thread">
-        <div class="thread-tools">
-          <h4>Обсуждение</h4>
-          <button class="task-action archive" type="button" id="taskArchiveThread">Отправить диалог в архив</button>
-        </div>
-        <div class="thread-list" id="taskThread"></div>
+        <section class="task-panel-pane discussion" id="taskPaneDiscussion" hidden>
         <textarea class="task-message-input" id="taskMessageInput" placeholder="Надиктуй или введи реплику по этой задаче"></textarea>
         <div class="dialog-tools">
           <button class="task-action voice-button" type="button" id="taskPanelVoice">Микрофон</button>
@@ -783,8 +770,11 @@
             <label class="model-choice"><input type="checkbox" name="taskModel" value="Grok">Grok</label>
             <label class="model-choice"><input type="checkbox" name="taskModel" value="Hermes">Hermes</label>
           </div>
+          <button class="task-action archive" type="button" id="taskArchiveThread">Отправить диалог в архив</button>
         </div>
+        <div class="thread-list" id="taskThread"></div>
       </section>
+      </div>
       <div class="dialog-actions">
         <button class="button" type="button" id="taskPanelCancel">Назад</button>
       </div>
@@ -1196,12 +1186,14 @@
     }
 
     function setTaskPanelView(view) {
-      taskPanelView = view === "summary" ? "summary" : "task";
+      taskPanelView = ["summary", "discussion"].includes(view) ? view : "task";
       byId("taskPaneTask").hidden = taskPanelView !== "task";
       byId("taskPaneSummary").hidden = taskPanelView !== "summary";
+      byId("taskPaneDiscussion").hidden = taskPanelView !== "discussion";
       byId("taskPanel").querySelectorAll("[data-task-panel-view]").forEach((button) => {
         button.classList.toggle("active", button.dataset.taskPanelView === taskPanelView);
       });
+      if (taskPanelView === "discussion") byId("taskMessageInput").focus();
     }
 
     function refreshTaskPanel() {
@@ -1230,9 +1222,9 @@
       const panel = byId("taskPanel");
       panel.hidden = false;
       byId("projectCards").replaceChildren(panel);
-      byId("projectSectionTitle").textContent = `Задача: ${taskText(currentPanelTask())}`;
+      byId("projectSectionTitle").textContent = "Задача";
       byId("projectFilters").style.display = "none";
-      byId("taskMessageInput").focus();
+      byId("taskPanelEditor").focus();
     }
 
     function saveTaskPanelText() {
