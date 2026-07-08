@@ -26,15 +26,18 @@ function Invoke-Push {
     return
   } catch {
     Write-Host ""
-    Write-Host "First push failed. Trying to connect Git to GitHub CLI credentials..."
-    if (Get-Command gh -ErrorAction SilentlyContinue) {
-      & gh auth setup-git
-      if ($LASTEXITCODE -eq 0) {
-        Invoke-Git -Arguments @("push", "origin", "main")
-        return
-      }
-    }
-    throw
+    Write-Host "First push failed. Trying to update local branch from GitHub..."
+    Invoke-Git -Arguments @("pull", "--rebase", "origin", "main")
+    Invoke-Git -Arguments @("push", "origin", "main")
+    return
+  }
+}
+
+function Invoke-SetupGitHubCredentials {
+  if (Get-Command gh -ErrorAction SilentlyContinue) {
+    Write-Host ""
+    Write-Host "Trying to connect Git to GitHub CLI credentials..."
+    & gh auth setup-git
   }
 }
 
@@ -67,7 +70,12 @@ if ($changedFiles) {
 }
 
 try {
-  Invoke-Push
+  try {
+    Invoke-Push
+  } catch {
+    Invoke-SetupGitHubCredentials
+    Invoke-Push
+  }
 
   Write-Host ""
   Write-Host "Done. GitHub Pages may need a minute to refresh."
