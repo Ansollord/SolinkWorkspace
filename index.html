@@ -287,6 +287,17 @@
     }
     .task-move:hover { background: #f4eadb; }
     .task-text { min-width: 0; }
+    .task-open-text {
+      border: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      font: inherit;
+      line-height: 1.35;
+      padding: 0;
+      text-align: left;
+    }
+    .task-open-text:hover { color: var(--accent); }
     .task-status {
       display: inline-flex;
       width: fit-content;
@@ -410,10 +421,12 @@
     .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
     .voice-button.listening { background: #dff0ec; border-color: var(--accent); color: #0f5f55; }
     .task-panel {
-      width: min(980px, calc(100vw - 28px));
-      max-height: calc(100vh - 28px);
+      width: 100vw;
+      max-width: 100vw;
+      height: 100vh;
+      max-height: 100vh;
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: 0;
       background: var(--paper);
       box-shadow: 0 18px 50px rgba(52, 43, 31, .28);
       color: var(--text);
@@ -423,6 +436,8 @@
       display: grid;
       gap: 14px;
       padding: 16px;
+      min-height: 100vh;
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
     }
     .task-panel-main {
       display: grid;
@@ -466,6 +481,24 @@
       font-weight: 800;
       line-height: 1.35;
     }
+    .task-focus-editor {
+      min-height: 120px;
+      resize: vertical;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.35;
+      padding: 10px;
+    }
+    .task-focus-editor:focus {
+      border-color: var(--line);
+      background: white;
+      outline: none;
+    }
     .task-context {
       display: flex;
       gap: 8px;
@@ -491,11 +524,14 @@
       border-radius: 8px;
       background: white;
       padding: 12px;
+      min-height: 0;
     }
     .thread-list {
       display: grid;
-      gap: 8px;
-      max-height: 230px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      align-content: start;
+      gap: 10px;
+      min-height: 0;
       overflow: auto;
       padding-right: 4px;
     }
@@ -506,6 +542,7 @@
       padding-left: 9px;
       color: #403b33;
     }
+    .thread-message.user { grid-column: 1 / -1; }
     .thread-message.user { border-left-color: var(--accent); }
     .thread-message.agent { border-left-color: #31547c; }
     .thread-message strong { font-size: 12px; }
@@ -547,6 +584,19 @@
       padding: 6px 8px;
     }
     .model-choice input { accent-color: var(--accent); }
+    .summary-results {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 10px;
+    }
+    .summary-result {
+      border: 1px solid var(--line);
+      border-left: 3px solid #31547c;
+      border-radius: 8px;
+      background: white;
+      padding: 10px;
+    }
+    .summary-result strong { display: block; margin-bottom: 5px; }
     .overview-components {
       display: grid;
       grid-template-columns: repeat(2, minmax(240px, 1fr));
@@ -690,16 +740,25 @@
             <span id="taskPanelPath"></span>
             <span class="task-status draft" id="taskPanelStatus">Черновик</span>
           </div>
-          <p class="task-focus-text" id="taskPanelText"></p>
+          <textarea class="task-focus-editor" id="taskPanelEditor" aria-label="Текст задачи"></textarea>
           <div class="dialog-tools">
+            <button class="task-action done" type="button" id="taskSaveText" hidden>Сохранить задачу</button>
             <button class="task-action agent" type="button" id="taskAskAgent">Агенту</button>
           </div>
         </div>
         <div class="task-panel-pane summary" id="taskPaneSummary" hidden>
           <h4>Рабочий итог</h4>
           <textarea class="task-summary" id="taskSummary" placeholder="Здесь будет краткий итог обсуждения"></textarea>
+          <div class="model-picker" aria-label="Модели для итогов">
+            <label class="model-choice"><input type="checkbox" name="summaryModel" value="ChatGPT" checked>ChatGPT</label>
+            <label class="model-choice"><input type="checkbox" name="summaryModel" value="Gemini">Gemini</label>
+            <label class="model-choice"><input type="checkbox" name="summaryModel" value="Grok">Grok</label>
+            <label class="model-choice"><input type="checkbox" name="summaryModel" value="Hermes">Hermes</label>
+          </div>
+          <div class="summary-results" id="summaryResults"></div>
           <div class="dialog-tools">
             <button class="task-action" type="button" id="taskDraftSummary">Сформулировать итог</button>
+            <button class="task-action agent" type="button" id="taskAskSummary">Подвести итог</button>
             <button class="task-action done" type="button" id="taskApplySummary">Обновить задачу из итога</button>
           </div>
         </div>
@@ -996,6 +1055,7 @@
           status: value.status || status,
           messages: Array.isArray(value.messages) ? value.messages : [],
           messageArchive: Array.isArray(value.messageArchive) ? value.messageArchive : [],
+          summaryResponses: Array.isArray(value.summaryResponses) ? value.summaryResponses : [],
           summary: String(value.summary || "")
         };
       }
@@ -1005,6 +1065,7 @@
         status,
         messages: [],
         messageArchive: [],
+        summaryResponses: [],
         summary: ""
       };
     }
@@ -1114,6 +1175,18 @@
         : `<div class="thread-message"><p>Здесь появится рабочий разговор по задаче.</p></div>`;
     }
 
+    function renderSummaryResults(task) {
+      const responses = Array.isArray(task.summaryResponses) ? task.summaryResponses : [];
+      byId("summaryResults").innerHTML = responses.length
+        ? responses.map((response) => `
+          <div class="summary-result">
+            <strong>${escapeHtml(response.model || "Модель")}</strong>
+            <p>${escapeHtml(response.text || "")}</p>
+          </div>
+        `).join("")
+        : "";
+    }
+
     function setTaskPanelView(view) {
       taskPanelView = view === "summary" ? "summary" : "task";
       byId("taskPaneTask").hidden = taskPanelView !== "task";
@@ -1129,12 +1202,14 @@
       const status = task.status || "draft";
       byId("taskPanelTitle").textContent = "Задача";
       byId("taskPanelPath").textContent = taskPath(taskPanelContext.project, taskPanelContext.parentProject);
-      byId("taskPanelText").textContent = taskText(task);
+      byId("taskPanelEditor").value = taskText(task);
+      byId("taskSaveText").hidden = true;
       byId("taskSummary").value = task.summary || "";
       const statusNode = byId("taskPanelStatus");
       statusNode.textContent = taskStatusLabels[status] || "Черновик";
       statusNode.className = `task-status ${status}`;
       renderTaskThread(task);
+      renderSummaryResults(task);
       setTaskPanelView(taskPanelView);
     }
 
@@ -1146,6 +1221,21 @@
       byId("taskPanelVoice").classList.remove("listening");
       byId("taskPanel").showModal();
       byId("taskMessageInput").focus();
+    }
+
+    function saveTaskPanelText() {
+      if (!taskPanelContext) return;
+      const text = normalizeTaskText(byId("taskPanelEditor").value);
+      if (!text) return;
+      const { project, parentProject, index } = taskPanelContext;
+      mutateOverviewState(project, parentProject, (draft) => {
+        const item = draft.todo[index];
+        if (!item) return;
+        item.text = text;
+      });
+      taskPanelContext = { project, parentProject, index };
+      byId("taskSaveText").hidden = true;
+      refreshTaskPanel();
     }
 
     function closeTaskPanel() {
@@ -1189,11 +1279,17 @@
         item.messages = [];
       });
       taskPanelContext = { project, parentProject, index };
+      if (applyToText) taskPanelView = "task";
       refreshTaskPanel();
     }
 
     function selectedTaskModels() {
       return Array.from(byId("taskPanel").querySelectorAll("input[name='taskModel']:checked"))
+        .map((item) => item.value);
+    }
+
+    function selectedSummaryModels() {
+      return Array.from(byId("taskPanel").querySelectorAll("input[name='summaryModel']:checked"))
         .map((item) => item.value);
     }
 
@@ -1227,6 +1323,32 @@
       });
       taskPanelContext = { project, parentProject, index };
       byId("taskMessageInput").value = "";
+      refreshTaskPanel();
+    }
+
+    function askSummaryModels() {
+      if (!taskPanelContext) return;
+      const models = selectedSummaryModels();
+      if (!models.length) {
+        alert("Выбери хотя бы одну модель для итога.");
+        return;
+      }
+      const { project, parentProject, index } = taskPanelContext;
+      mutateOverviewState(project, parentProject, (draft) => {
+        const item = draft.todo[index];
+        if (!item) return;
+        const sourceCount = Array.isArray(item.messages) ? item.messages.length : 0;
+        item.summaryResponses = Array.isArray(item.summaryResponses) ? item.summaryResponses : [];
+        models.forEach((model) => {
+          item.summaryResponses.unshift({
+            model,
+            text: `${model}: итог будет здесь после подключения Hermes/OpenRouter. Источник: ${sourceCount} сообщений обсуждения.`,
+            createdAt: new Date().toISOString()
+          });
+        });
+      });
+      taskPanelContext = { project, parentProject, index };
+      taskPanelView = "summary";
       refreshTaskPanel();
     }
 
@@ -1376,15 +1498,14 @@
               <button class="task-move" type="button" data-task-action="up" data-task-index="${index}" aria-label="Выше">↑</button>
               <button class="task-move" type="button" data-task-action="down" data-task-index="${index}" aria-label="Ниже">↓</button>
             </span>
-            <span class="task-text">
+            <button class="task-text task-open-text" type="button" data-task-action="open" data-task-index="${index}">
               <span class="task-status ${escapeHtml(item.status || "draft")}">${escapeHtml(taskStatusLabels[item.status || "draft"] || "Черновик")}</span>
               ${escapeHtml(taskText(item))}
-            </span>
+            </button>
             <span class="task-actions">
               <button class="task-action task-menu-button" type="button" data-task-action="menu" data-task-index="${index}" aria-label="Меню задачи">...</button>
               <span class="task-menu" data-task-menu="${index}" hidden>
                 <button class="task-action" type="button" data-task-action="open" data-task-index="${index}">Открыть задачу</button>
-                <button class="task-action" type="button" data-task-action="edit" data-task-index="${index}">Редактировать</button>
                 <button class="task-action agent" type="button" data-task-action="agent" data-task-index="${index}">Агенту</button>
                 <button class="task-action done" type="button" data-task-action="done" data-task-index="${index}">Готово</button>
                 <button class="task-action archive" type="button" data-task-action="archive" data-task-index="${index}">Архив</button>
@@ -1479,10 +1600,6 @@
           }
           if (action === "open") {
             openTaskPanel(project, parentProject, index);
-            return;
-          }
-          if (action === "edit") {
-            openTaskDialog(project, parentProject, "edit", index);
             return;
           }
           mutateOverviewState(project, parentProject, (draft) => {
@@ -1640,6 +1757,11 @@
     });
     byId("taskPanelVoice").addEventListener("click", () => startVoiceInput("taskMessageInput", "taskPanelVoice"));
     byId("taskAskModels").addEventListener("click", askSelectedModels);
+    byId("taskPanelEditor").addEventListener("input", () => {
+      const task = currentPanelTask();
+      byId("taskSaveText").hidden = task ? byId("taskPanelEditor").value.trim() === taskText(task).trim() : true;
+    });
+    byId("taskSaveText").addEventListener("click", saveTaskPanelText);
     byId("taskAskAgent").addEventListener("click", () => {
       if (!taskPanelContext) return;
       const { project, parentProject, index } = taskPanelContext;
@@ -1658,6 +1780,7 @@
       refreshTaskPanel();
     });
     byId("taskDraftSummary").addEventListener("click", draftTaskSummary);
+    byId("taskAskSummary").addEventListener("click", askSummaryModels);
     byId("taskSummary").addEventListener("change", () => saveTaskSummary(false));
     byId("taskApplySummary").addEventListener("click", () => saveTaskSummary(true));
     byId("taskArchiveThread").addEventListener("click", archiveTaskThread);
