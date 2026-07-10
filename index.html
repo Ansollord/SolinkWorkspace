@@ -84,7 +84,7 @@
     .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
     .layout {
       display: grid;
-      grid-template-columns: 270px 1fr 320px;
+      grid-template-columns: var(--sidebar-width, 270px) 8px minmax(420px, 1fr) 8px var(--rightbar-width, 320px);
       min-height: calc(100vh - 64px);
     }
     .sidebar, .rightbar {
@@ -95,6 +95,45 @@
     }
     .rightbar { border-right: 0; border-left: 1px solid var(--line); }
     .main { padding: 18px; overflow: auto; }
+    .resize-handle {
+      position: relative;
+      z-index: 4;
+      background: transparent;
+      touch-action: none;
+      user-select: none;
+    }
+    .resize-handle.vertical {
+      cursor: col-resize;
+      min-width: 8px;
+    }
+    .resize-handle.horizontal {
+      cursor: row-resize;
+      min-height: 8px;
+    }
+    .resize-handle::after {
+      content: "";
+      position: absolute;
+      background: var(--line);
+      border-radius: 999px;
+      transition: background .15s ease, box-shadow .15s ease;
+    }
+    .resize-handle.vertical::after {
+      top: 12px;
+      bottom: 12px;
+      left: 3px;
+      width: 2px;
+    }
+    .resize-handle.horizontal::after {
+      left: 12px;
+      right: 12px;
+      top: 3px;
+      height: 2px;
+    }
+    .resize-handle:hover::after,
+    .resize-handle.dragging::after {
+      background: var(--accent);
+      box-shadow: 0 0 0 3px rgba(17, 119, 103, .12);
+    }
     .section-title {
       display: flex;
       align-items: center;
@@ -440,7 +479,7 @@
       gap: 14px;
       padding: 0;
       min-height: calc(100vh - 104px);
-      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      grid-template-rows: var(--task-top-height, auto) 8px minmax(0, 1fr);
       width: 100%;
     }
     .task-panel-main {
@@ -579,8 +618,9 @@
       color: var(--accent);
     }
     .thread-list.focused {
-      grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr);
+      grid-template-columns: minmax(360px, var(--focused-model-width, 60%)) 8px minmax(240px, 1fr);
       align-items: start;
+      column-gap: 8px;
     }
     .model-thread-stack {
       display: grid;
@@ -701,12 +741,13 @@
     .event { border-left: 3px solid var(--line); padding-left: 10px; color: #403b33; }
     .event strong { display: block; margin-bottom: 2px; }
     @media (max-width: 1100px) {
-      .layout { grid-template-columns: 220px 1fr; }
-      .rightbar { display: none; }
+      .layout { grid-template-columns: var(--sidebar-width, 220px) 8px minmax(0, 1fr); }
+      .rightbar,
+      .resize-handle[data-resize-handle="rightbar"] { display: none; }
       .hero { grid-template-columns: 1fr; }
       .overview-grid, .overview-components { grid-template-columns: 1fr; }
       .task-panel-main { grid-template-columns: 1fr; }
-      .thread-list.focused { grid-template-columns: minmax(0, 3fr) minmax(240px, 2fr); }
+      .thread-list.focused { grid-template-columns: minmax(320px, var(--focused-model-width, 58%)) 8px minmax(220px, 1fr); }
     }
     @media (max-width: 760px) {
       .shell { grid-template-rows: auto 1fr; }
@@ -717,7 +758,8 @@
       .search { order: 3; flex: 1 1 100%; max-width: none; }
       .status-strip { order: 4; margin-left: 0; white-space: normal; }
       .layout { grid-template-columns: 1fr; }
-      .sidebar { display: none; }
+      .sidebar,
+      .resize-handle { display: none; }
       .main { padding: 12px; }
       .mission { padding: 14px; }
       .mission h2 { font-size: 20px; }
@@ -755,6 +797,8 @@
         <nav class="nav-list" id="projectNav" aria-label="Проекты"></nav>
       </aside>
 
+      <div class="resize-handle vertical" data-resize-handle="sidebar" role="separator" aria-label="Resize projects column"></div>
+
       <main class="main">
         <section class="hero">
           <div class="mission">
@@ -772,6 +816,8 @@
 
         <section class="cards" id="projectCards"></section>
       </main>
+
+      <div class="resize-handle vertical" data-resize-handle="rightbar" role="separator" aria-label="Resize decisions column"></div>
 
       <aside class="rightbar">
         <div class="section-title">
@@ -835,6 +881,7 @@
           </div>
         </div>
       </div>
+      <div class="resize-handle horizontal" data-resize-handle="task-top" role="separator" aria-label="Resize task top panel"></div>
       <section class="task-panel-pane discussion" id="taskPaneDiscussion">
         <div class="discussion-composer">
           <textarea class="task-message-input" id="taskMessageInput" placeholder="Надиктуй или введи реплику по этой задаче"></textarea>
@@ -1087,6 +1134,105 @@
       "'": "&#39;"
     })[char]);
 
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function readLayoutSizes() {
+      try {
+        return JSON.parse(localStorage.getItem("solinkLayoutSizes") || "{}");
+      } catch {
+        return {};
+      }
+    }
+
+    function saveLayoutSize(name, value) {
+      const sizes = readLayoutSizes();
+      sizes[name] = value;
+      localStorage.setItem("solinkLayoutSizes", JSON.stringify(sizes));
+    }
+
+    function setLayoutSize(name, value) {
+      const root = document.documentElement;
+      if (name === "sidebar") root.style.setProperty("--sidebar-width", `${value}px`);
+      if (name === "rightbar") root.style.setProperty("--rightbar-width", `${value}px`);
+      if (name === "taskTop") root.style.setProperty("--task-top-height", `${value}px`);
+      if (name === "focusedModel") root.style.setProperty("--focused-model-width", `${value}%`);
+    }
+
+    function restoreResizableLayout() {
+      const sizes = readLayoutSizes();
+      if (Number.isFinite(sizes.sidebar)) setLayoutSize("sidebar", sizes.sidebar);
+      if (Number.isFinite(sizes.rightbar)) setLayoutSize("rightbar", sizes.rightbar);
+      if (Number.isFinite(sizes.taskTop)) setLayoutSize("taskTop", sizes.taskTop);
+      if (Number.isFinite(sizes.focusedModel)) setLayoutSize("focusedModel", sizes.focusedModel);
+    }
+
+    function initResizableLayout() {
+      document.addEventListener("pointerdown", (event) => {
+        const handle = event.target.closest("[data-resize-handle]");
+        if (!handle || window.matchMedia("(max-width: 760px)").matches) return;
+        const type = handle.dataset.resizeHandle;
+        const layout = document.querySelector(".layout");
+        const taskBody = byId("taskPanel")?.hidden ? null : byId("taskPanel")?.querySelector(".task-panel-body");
+        const thread = type === "focused-model" ? byId("taskThread") : null;
+        const layoutRect = layout?.getBoundingClientRect();
+        const taskRect = taskBody?.getBoundingClientRect();
+        const threadRect = thread?.getBoundingClientRect();
+        if ((type === "sidebar" || type === "rightbar") && !layoutRect) return;
+        if (type === "task-top" && !taskRect) return;
+        if (type === "focused-model" && !threadRect) return;
+
+        event.preventDefault();
+        handle.classList.add("dragging");
+        handle.setPointerCapture?.(event.pointerId);
+
+        const move = (moveEvent) => {
+          if (type === "sidebar") {
+            const max = Math.max(220, layoutRect.width - 560);
+            const value = clamp(moveEvent.clientX - layoutRect.left, 180, Math.min(520, max));
+            setLayoutSize("sidebar", Math.round(value));
+            return;
+          }
+          if (type === "rightbar") {
+            const max = Math.max(240, layoutRect.width - 620);
+            const value = clamp(layoutRect.right - moveEvent.clientX, 220, Math.min(560, max));
+            setLayoutSize("rightbar", Math.round(value));
+            return;
+          }
+          if (type === "task-top") {
+            const value = clamp(moveEvent.clientY - taskRect.top, 150, Math.max(180, taskRect.height - 280));
+            setLayoutSize("taskTop", Math.round(value));
+            return;
+          }
+          if (type === "focused-model") {
+            const value = clamp(((moveEvent.clientX - threadRect.left) / threadRect.width) * 100, 42, 74);
+            setLayoutSize("focusedModel", Math.round(value));
+          }
+        };
+
+        const stop = () => {
+          handle.classList.remove("dragging");
+          const styles = getComputedStyle(document.documentElement);
+          const sidebar = parseFloat(styles.getPropertyValue("--sidebar-width"));
+          const rightbar = parseFloat(styles.getPropertyValue("--rightbar-width"));
+          const taskTop = parseFloat(styles.getPropertyValue("--task-top-height"));
+          const focusedModel = parseFloat(styles.getPropertyValue("--focused-model-width"));
+          if (Number.isFinite(sidebar)) saveLayoutSize("sidebar", Math.round(sidebar));
+          if (Number.isFinite(rightbar)) saveLayoutSize("rightbar", Math.round(rightbar));
+          if (Number.isFinite(taskTop)) saveLayoutSize("taskTop", Math.round(taskTop));
+          if (Number.isFinite(focusedModel)) saveLayoutSize("focusedModel", Math.round(focusedModel));
+          window.removeEventListener("pointermove", move);
+          window.removeEventListener("pointerup", stop);
+          window.removeEventListener("pointercancel", stop);
+        };
+
+        window.addEventListener("pointermove", move);
+        window.addEventListener("pointerup", stop);
+        window.addEventListener("pointercancel", stop);
+      });
+    }
+
     function renderMetrics(metrics) {
       byId("metrics").innerHTML = metrics.map((metric) => `
         <div class="metric"><strong>${escapeHtml(metric.value)}</strong><span>${escapeHtml(metric.label)}</span></div>
@@ -1288,6 +1434,7 @@
       `;
       thread.innerHTML = focusedTaskModel
         ? `${renderModelThread(focusedTaskModel)}
+          <div class="resize-handle vertical thread-resizer" data-resize-handle="focused-model" role="separator" aria-label="Resize focused model"></div>
           <div class="model-thread-stack">
             ${models.filter((model) => model !== focusedTaskModel).map(renderModelThread).join("")}
           </div>`
@@ -1931,6 +2078,8 @@
     byId("taskSummary").addEventListener("change", () => saveTaskSummary(false));
     byId("taskApplySummary").addEventListener("click", () => saveTaskSummary(true));
     byId("taskArchiveThread").addEventListener("click", archiveTaskThread);
+    restoreResizableLayout();
+    initResizableLayout();
 
     fetch("projects.json", { cache: "no-store" })
       .then((response) => response.ok ? response.json() : Promise.reject(new Error("projects.json not found")))
