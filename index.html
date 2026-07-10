@@ -143,6 +143,22 @@
     .section-title h2 { margin: 0; font-size: 16px; }
     .small { color: var(--muted); font-size: 12px; }
     .nav-list { display: grid; gap: 7px; }
+    .nav-group {
+      display: grid;
+      gap: 6px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 10px;
+    }
+    .nav-group:last-child { border-bottom: 0; margin-bottom: 0; padding-bottom: 0; }
+    .nav-group-title {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+      padding: 0 4px;
+    }
     .nav-item {
       display: flex;
       justify-content: space-between;
@@ -860,6 +876,58 @@
       color: #302b22;
     }
     .button.primary { background: var(--accent); border-color: var(--accent); color: white; }
+    .quick-layout {
+      display: grid;
+      grid-template-columns: minmax(320px, .9fr) minmax(360px, 1.1fr);
+      gap: 12px;
+      align-items: start;
+    }
+    .quick-composer {
+      display: grid;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+      padding: 12px;
+    }
+    .quick-input {
+      min-height: 180px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+      color: var(--text);
+      font: inherit;
+      line-height: 1.45;
+      padding: 10px;
+    }
+    .quick-answers {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+    }
+    .quick-answer {
+      border: 1px solid var(--line);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      background: white;
+      padding: 10px;
+    }
+    .quick-answer strong { display: block; margin-bottom: 6px; }
+    .mode-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 12px;
+    }
+    .mode-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+      padding: 14px;
+      min-height: 120px;
+    }
+    .mode-card h3 { margin: 0 0 8px; font-size: 18px; }
+    .mode-card p { margin: 0; color: var(--muted); line-height: 1.45; }
     .timeline { display: grid; gap: 10px; }
     .event { border-left: 3px solid var(--line); padding-left: 10px; color: #403b33; }
     .event strong { display: block; margin-bottom: 2px; }
@@ -872,6 +940,7 @@
       .overview-grid > .resize-handle { display: none; }
       .task-panel-main { grid-template-columns: 1fr; }
       .context-layout { grid-template-columns: 1fr; }
+      .quick-layout { grid-template-columns: 1fr; }
       .thread-list.focused { grid-template-columns: minmax(320px, var(--focused-model-width, 58%)) 8px minmax(220px, 1fr); }
     }
     @media (max-width: 760px) {
@@ -1300,6 +1369,7 @@
     let currentData = fallbackData;
     let currentFilter = "active";
     let currentQuery = "";
+    let selectedModeId = "home";
     let selectedProjectId = "";
     let selectedComponentId = "";
     let taskDialogContext = null;
@@ -1309,6 +1379,14 @@
     let recognition = null;
 
     const byId = (id) => document.getElementById(id);
+    const workspaceModes = [
+      { id: "home", title: "Home", badge: "H", description: "Главная картина проектов и текущих направлений." },
+      { id: "quick", title: "Quick Ask", badge: "QA", description: "Быстрый вопрос выбранным моделям без привязки к проекту." },
+      { id: "inbox", title: "Inbox", badge: "IN", description: "Входящие мысли, покупки, поручения и идеи до распределения." },
+      { id: "catalog", title: "Catalog", badge: "CA", description: "Долговременная память: карточки, источники, контексты и архивы." },
+      { id: "agents", title: "Agents", badge: "AG", description: "Очередь задач для моделей, Hermes, OpenRouter и локальных агентов." },
+      { id: "settings", title: "Settings", badge: "SE", description: "Модели, провайдеры, лимиты, ключи и правила отправки." }
+    ];
     const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
       "&": "&amp;",
       "<": "&lt;",
@@ -2193,12 +2271,37 @@
     function renderNav(projects) {
       const activeCount = projects.filter((project) => (project.category || "active") === "active").length;
       byId("projectCount").textContent = `${activeCount} \u0430\u043a\u0442\u0438\u0432\u043d\u044b\u0445`;
-      byId("projectNav").innerHTML = projects.map((project) => `
-        <a class="nav-item ${project.id === selectedProjectId ? "active" : ""}" href="#${escapeHtml(project.id || "")}" data-project-id="${escapeHtml(project.id || "")}">
-          <span>${escapeHtml(project.title)}</span>
-          <span class="badge">${escapeHtml(project.badge)}</span>
-        </a>
-      `).join("");
+      byId("projectNav").innerHTML = `
+        <div class="nav-group">
+          <span class="nav-group-title">Workspace</span>
+          ${workspaceModes.map((mode) => `
+            <a class="nav-item ${selectedModeId === mode.id && !selectedProjectId ? "active" : ""}" href="#${escapeHtml(mode.id)}" data-mode-id="${escapeHtml(mode.id)}">
+              <span>${escapeHtml(mode.title)}</span>
+              <span class="badge">${escapeHtml(mode.badge)}</span>
+            </a>
+          `).join("")}
+        </div>
+        <div class="nav-group">
+          <span class="nav-group-title">Projects</span>
+          ${projects.map((project) => `
+            <a class="nav-item ${project.id === selectedProjectId ? "active" : ""}" href="#${escapeHtml(project.id || "")}" data-project-id="${escapeHtml(project.id || "")}">
+              <span>${escapeHtml(project.title)}</span>
+              <span class="badge">${escapeHtml(project.badge)}</span>
+            </a>
+          `).join("")}
+        </div>
+      `;
+      byId("projectNav").querySelectorAll("[data-mode-id]").forEach((link) => {
+        link.addEventListener("click", (event) => {
+          event.preventDefault();
+          selectedModeId = link.dataset.modeId || "home";
+          selectedProjectId = "";
+          selectedComponentId = "";
+          currentQuery = "";
+          byId("search").value = "";
+          render(currentData);
+        });
+      });
       byId("projectNav").querySelectorAll("[data-project-id]").forEach((link) => {
         link.addEventListener("click", (event) => {
           event.preventDefault();
@@ -2206,6 +2309,7 @@
           const project = currentData.projects.find((item) => item.id === projectId);
           if (!project) return;
           selectedProjectId = projectId;
+          selectedModeId = "projects";
           selectedComponentId = "";
           currentQuery = "";
           byId("search").value = "";
@@ -2398,9 +2502,137 @@
       });
     }
 
+    function renderQuickAsk() {
+      byId("projectSectionTitle").textContent = "Quick Ask";
+      byId("projectFilters").style.display = "none";
+      byId("projectCards").innerHTML = `
+        <article class="project-card project-overview">
+          <div class="project-head">
+            <div class="overview-lead">
+              <h3>Быстрый вопрос</h3>
+              <p>Свободный вход в модели без привязки к проекту. Здесь можно спросить, продиктовать мысль, сравнить ответы и потом отправить результат в задачу, заметку или Catalog.</p>
+            </div>
+            <span class="status ok">Легкий режим</span>
+          </div>
+          <div class="quick-layout">
+            <section class="quick-composer">
+              <textarea class="quick-input" id="quickAskInput" placeholder="Надиктуй или введи короткий вопрос без привязки к проекту"></textarea>
+              <div class="model-picker" aria-label="Модели для быстрого вопроса">
+                <label class="model-choice"><input type="checkbox" name="quickModel" value="ChatGPT" checked>ChatGPT</label>
+                <label class="model-choice"><input type="checkbox" name="quickModel" value="Gemini">Gemini</label>
+                <label class="model-choice"><input type="checkbox" name="quickModel" value="Grok">Grok</label>
+                <label class="model-choice"><input type="checkbox" name="quickModel" value="Hermes">Hermes</label>
+              </div>
+              <div class="dialog-tools">
+                <button class="task-action voice-button" type="button" id="quickVoice">Микрофон</button>
+                <button class="task-action agent" type="button" id="quickAskButton">Спросить</button>
+                <button class="task-action" type="button" id="quickClearButton">Очистить</button>
+              </div>
+            </section>
+            <section class="quick-composer">
+              <h4>Ответы моделей</h4>
+              <div class="quick-answers" id="quickAnswers">
+                <div class="quick-answer"><strong>Ожидание</strong><p>Выбери модели, введи вопрос и нажми «Спросить».</p></div>
+              </div>
+              <div class="dialog-tools">
+                <button class="task-action" type="button" disabled>В задачу</button>
+                <button class="task-action" type="button" disabled>В заметку</button>
+                <button class="task-action" type="button" disabled>В Catalog</button>
+              </div>
+            </section>
+          </div>
+        </article>
+      `;
+      byId("quickAskButton").addEventListener("click", () => {
+        const text = normalizeTaskText(byId("quickAskInput").value);
+        const models = Array.from(document.querySelectorAll("input[name='quickModel']:checked")).map((item) => item.value);
+        if (!text) {
+          alert("Сначала введи или надиктуй вопрос.");
+          byId("quickAskInput").focus();
+          return;
+        }
+        if (!models.length) {
+          alert("Выбери хотя бы одну модель.");
+          return;
+        }
+        byId("quickAnswers").innerHTML = models.map((model) => `
+          <div class="quick-answer">
+            <strong>${escapeHtml(model)}</strong>
+            <p>${escapeHtml(model)}: быстрый вопрос принят. После подключения Hermes/OpenRouter здесь будет настоящий ответ модели.</p>
+            <p class="small">Вопрос: ${escapeHtml(text)}</p>
+          </div>
+        `).join("");
+      });
+      byId("quickClearButton").addEventListener("click", () => {
+        byId("quickAskInput").value = "";
+        byId("quickAnswers").innerHTML = `<div class="quick-answer"><strong>Ожидание</strong><p>Выбери модели, введи вопрос и нажми «Спросить».</p></div>`;
+      });
+      byId("quickVoice").addEventListener("click", () => startVoiceInput("quickAskInput", "quickVoice"));
+    }
+
+    function renderModePage(modeId) {
+      if (modeId === "quick") {
+        renderQuickAsk();
+        return;
+      }
+      const mode = workspaceModes.find((item) => item.id === modeId) || workspaceModes[0];
+      const cards = {
+        home: [
+          ["Проекты", "Текущая карта WebLinker, SolinkDesk и будущих рабочих направлений."],
+          ["Быстрый вход", "Quick Ask для коротких вопросов без проектного контекста."],
+          ["Память", "Catalog постепенно станет долговременным хранилищем задач, контекста и источников."]
+        ],
+        inbox: [
+          ["Мысли", "Быстро сохранить идею, которую позже можно превратить в задачу."],
+          ["Покупки", "Записывать бытовые списки и решения без открытия проектного режима."],
+          ["Поручения", "Черновик будущей очереди дел для себя, людей и агентов."]
+        ],
+        catalog: [
+          ["Контекст", "Долговременная память задач, обсуждений, источников и рабочих итогов."],
+          ["Карточки", "Единая модель записи для проектов, ссылок, документов, задач и решений."],
+          ["Связи", "Переходы между Quick Ask, Inbox, Projects и WebLinker Catalog."]
+        ],
+        agents: [
+          ["Очередь", "Что отправлено моделям или локальным агентам."],
+          ["Пакеты", "Состав контекста, режим, вес, источники и критерии готовности."],
+          ["Исполнение", "Будущий безопасный запуск через Hermes/OpenRouter и Command Service."]
+        ],
+        settings: [
+          ["Модели", "Список провайдеров, доступность, лимиты и роли."],
+          ["Безопасность", "Ключи, локальный сервер, Tailscale и права команд."],
+          ["Интерфейс", "Мобильный режим, быстрые кнопки и правила контекстных пакетов."]
+        ]
+      };
+      byId("projectSectionTitle").textContent = mode.title;
+      byId("projectFilters").style.display = "none";
+      byId("projectCards").innerHTML = `
+        <article class="project-card project-overview">
+          <div class="project-head">
+            <div class="overview-lead">
+              <h3>${escapeHtml(mode.title)}</h3>
+              <p>${escapeHtml(mode.description)}</p>
+            </div>
+            <span class="status ok">${escapeHtml(mode.badge)}</span>
+          </div>
+          <div class="mode-grid">
+            ${(cards[mode.id] || cards.home).map(([title, text]) => `
+              <section class="mode-card">
+                <h3>${escapeHtml(title)}</h3>
+                <p>${escapeHtml(text)}</p>
+              </section>
+            `).join("")}
+          </div>
+        </article>
+      `;
+    }
+
     function renderCards(projects) {
       const parent = selectedProject(currentData.projects || []);
       const component = selectedComponent(parent);
+      if (!parent && selectedModeId !== "home" && selectedModeId !== "projects") {
+        renderModePage(selectedModeId);
+        return;
+      }
       byId("projectSectionTitle").textContent = parent
         ? (component ? `${parent.title}: ${component.title}` : parent.title)
         : `${filterLabels[currentFilter]} \u043f\u0440\u043e\u0435\u043a\u0442\u044b`;
@@ -2469,6 +2701,7 @@
     byId("workspaceHome").addEventListener("click", () => {
       currentFilter = "active";
       currentQuery = "";
+      selectedModeId = "home";
       selectedProjectId = "";
       selectedComponentId = "";
       byId("search").value = "";
