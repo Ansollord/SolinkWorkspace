@@ -566,6 +566,77 @@
       line-height: 1.45;
       padding: 10px;
     }
+    .context-layout {
+      display: grid;
+      grid-template-columns: minmax(260px, .9fr) minmax(320px, 1.1fr);
+      gap: 12px;
+      align-items: start;
+    }
+    .context-card {
+      display: grid;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+      padding: 10px;
+    }
+    .context-card h4 { margin: 0; font-size: 14px; }
+    .context-mode-list {
+      display: grid;
+      gap: 7px;
+    }
+    .context-mode {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffaf0;
+      padding: 9px;
+      cursor: pointer;
+    }
+    .context-mode input { margin-top: 3px; accent-color: var(--accent); }
+    .context-mode strong { display: block; margin-bottom: 2px; }
+    .context-mode span { color: var(--muted); font-size: 12px; line-height: 1.35; }
+    .context-field {
+      display: grid;
+      gap: 6px;
+    }
+    .context-field label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .context-field textarea,
+    .package-preview {
+      min-height: 110px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+      color: var(--text);
+      font: inherit;
+      line-height: 1.45;
+      padding: 10px;
+    }
+    .package-preview {
+      min-height: 260px;
+      white-space: pre-wrap;
+      overflow: auto;
+    }
+    .context-checks {
+      display: grid;
+      gap: 6px;
+    }
+    .context-checks label {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .context-checks input { accent-color: var(--accent); }
     .task-panel-pane.discussion { min-height: 0; margin-top: 12px; }
     .discussion-composer {
       display: grid;
@@ -752,6 +823,7 @@
       .overview-grid, .overview-components { grid-template-columns: 1fr; }
       .overview-grid > .resize-handle { display: none; }
       .task-panel-main { grid-template-columns: 1fr; }
+      .context-layout { grid-template-columns: 1fr; }
       .thread-list.focused { grid-template-columns: minmax(320px, var(--focused-model-width, 58%)) 8px minmax(220px, 1fr); }
     }
     @media (max-width: 760px) {
@@ -855,6 +927,7 @@
       <div class="task-panel-main">
         <div class="task-panel-tabs">
           <button class="task-panel-tab active" type="button" data-task-panel-view="task">Задача</button>
+          <button class="task-panel-tab" type="button" data-task-panel-view="context">Контекст</button>
           <button class="task-panel-tab" type="button" data-task-panel-view="summary">Рабочий итог</button>
           <button class="dialog-close task-back-button" type="button" id="taskPanelClose" aria-label="Назад">←</button>
         </div>
@@ -867,6 +940,55 @@
           <div class="dialog-tools">
             <button class="task-action done" type="button" id="taskSaveText" hidden>Сохранить задачу</button>
             <button class="task-action agent" type="button" id="taskAskAgent">Агенту</button>
+          </div>
+        </div>
+        <div class="task-panel-pane context" id="taskPaneContext" hidden>
+          <div class="context-layout">
+            <section class="context-card">
+              <h4>Режим контекста</h4>
+              <div class="context-mode-list" id="contextModeList">
+                <label class="context-mode">
+                  <input type="radio" name="contextMode" value="quick">
+                  <span><strong>Быстро</strong><span>Задача, рабочий итог и новая реплика.</span></span>
+                </label>
+                <label class="context-mode">
+                  <input type="radio" name="contextMode" value="work" checked>
+                  <span><strong>Рабоче</strong><span>Контекст задачи, итог, последние реплики и решения проекта.</span></span>
+                </label>
+                <label class="context-mode">
+                  <input type="radio" name="contextMode" value="deep">
+                  <span><strong>Глубоко</strong><span>Более полный пакет: контекст, сделанное, ограничения, источники и архивная рамка.</span></span>
+                </label>
+                <label class="context-mode">
+                  <input type="radio" name="contextMode" value="agent">
+                  <span><strong>Агенту</strong><span>Цель, файлы, ограничения, критерий готовности и ожидаемое действие.</span></span>
+                </label>
+              </div>
+              <div class="context-field">
+                <label for="taskContextNotes">Контекст задачи</label>
+                <textarea id="taskContextNotes" placeholder="Почему задача появилась, что уже важно помнить, какая рамка обсуждения."></textarea>
+              </div>
+              <div class="context-field">
+                <label for="taskSourceNotes">Источники и ограничения</label>
+                <textarea id="taskSourceNotes" placeholder="Файлы, папки, карточки Catalog, чаты, решения, ограничения и что нельзя сломать."></textarea>
+              </div>
+              <div class="dialog-tools">
+                <button class="task-action done" type="button" id="taskSaveContext">Сохранить контекст</button>
+              </div>
+            </section>
+            <section class="context-card">
+              <h4>Что уйдет модели</h4>
+              <div class="context-checks" id="contextIncludeList">
+                <label><input type="checkbox" data-context-include="task" checked>Задача</label>
+                <label><input type="checkbox" data-context-include="context" checked>Контекст задачи</label>
+                <label><input type="checkbox" data-context-include="summary" checked>Рабочий итог</label>
+                <label><input type="checkbox" data-context-include="recent" checked>Последние реплики</label>
+                <label><input type="checkbox" data-context-include="project" checked>Контекст проекта</label>
+                <label><input type="checkbox" data-context-include="done">Что уже сделано</label>
+                <label><input type="checkbox" data-context-include="sources" checked>Источники и ограничения</label>
+              </div>
+              <pre class="package-preview" id="taskPackagePreview"></pre>
+            </section>
           </div>
         </div>
         <div class="task-panel-pane summary" id="taskPaneSummary" hidden>
@@ -1348,7 +1470,11 @@
           messages: Array.isArray(value.messages) ? value.messages.filter((message) => !isDemoMessage(message)) : [],
           messageArchive: Array.isArray(value.messageArchive) ? value.messageArchive : [],
           summaryResponses: Array.isArray(value.summaryResponses) ? value.summaryResponses : [],
-          summary: String(value.summary || "")
+          summary: String(value.summary || ""),
+          contextNotes: String(value.contextNotes || ""),
+          sourceNotes: String(value.sourceNotes || ""),
+          contextMode: String(value.contextMode || "work"),
+          contextIncludes: value.contextIncludes && typeof value.contextIncludes === "object" ? value.contextIncludes : {}
         };
       }
       return {
@@ -1358,7 +1484,11 @@
         messages: [],
         messageArchive: [],
         summaryResponses: [],
-        summary: ""
+        summary: "",
+        contextNotes: "",
+        sourceNotes: "",
+        contextMode: "work",
+        contextIncludes: {}
       };
     }
 
@@ -1459,6 +1589,81 @@
       return state.todo[taskPanelContext.index] || null;
     }
 
+    function contextIncludesForMode(mode) {
+      const presets = {
+        quick: { task: true, context: false, summary: true, recent: false, project: false, done: false, sources: false },
+        work: { task: true, context: true, summary: true, recent: true, project: true, done: false, sources: true },
+        deep: { task: true, context: true, summary: true, recent: true, project: true, done: true, sources: true },
+        agent: { task: true, context: true, summary: true, recent: true, project: true, done: false, sources: true }
+      };
+      return presets[mode] || presets.work;
+    }
+
+    function selectedContextIncludes(task) {
+      const mode = task?.contextMode || "work";
+      const preset = contextIncludesForMode(mode);
+      return { ...preset, ...(task?.contextIncludes || {}) };
+    }
+
+    function collectRecentMessages(task, limit = 6) {
+      return (Array.isArray(task.messages) ? task.messages : [])
+        .filter((message) => message.role === "user" || message.role === "agent")
+        .slice(-limit)
+        .map((message) => {
+          const name = message.role === "user" ? "Я" : (message.model || "Агент");
+          return `${name}: ${message.text || ""}`;
+        });
+    }
+
+    function buildTaskPackage(task, userText = "") {
+      if (!taskPanelContext || !task) return "";
+      const { project, parentProject } = taskPanelContext;
+      const includes = selectedContextIncludes(task);
+      const overview = project.overview || {};
+      const state = overviewState(project, parentProject);
+      const modeLabels = {
+        quick: "Быстрый вопрос",
+        work: "Рабочее продолжение",
+        deep: "Глубокий разбор",
+        agent: "Передать агенту"
+      };
+      const sections = [`Режим: ${modeLabels[task.contextMode || "work"] || "Рабочее продолжение"}`];
+      if (includes.project) {
+        sections.push(`Проект: ${taskPath(project, parentProject)}\n${overview.summary || project.next || ""}`);
+      }
+      if (includes.task) sections.push(`Задача:\n${taskText(task)}`);
+      if (includes.context) sections.push(`Контекст задачи:\n${task.contextNotes || "Контекст пока не заполнен."}`);
+      if (includes.summary) sections.push(`Рабочий итог:\n${task.summary || "Итог пока не сформулирован."}`);
+      if (includes.sources) {
+        sections.push(`Источники и ограничения:\n${task.sourceNotes || project.folder || parentProject?.folder || "Источники пока не указаны."}`);
+      }
+      if (includes.done) {
+        const done = state.done.slice(0, 8).map((item, index) => `${index + 1}. ${taskText(item)}`).join("\n");
+        sections.push(`Что уже сделано:\n${done || "Пока нет отмеченных выполненных пунктов."}`);
+      }
+      if (includes.recent) {
+        sections.push(`Последние реплики:\n${collectRecentMessages(task).join("\n") || "Обсуждение пока не начато."}`);
+      }
+      if (userText) sections.push(`Новая реплика пользователя:\n${userText}`);
+      sections.push("Задача для модели:\nОтветь с учетом выбранного контекстного пакета. Если данных не хватает, сначала назови недостающий контекст.");
+      return sections.join("\n\n---\n\n");
+    }
+
+    function renderTaskPackagePreview() {
+      const task = currentPanelTask();
+      const preview = byId("taskPackagePreview");
+      if (!task || !preview) return;
+      const draftTask = {
+        ...task,
+        contextNotes: byId("taskContextNotes")?.value.trim() ?? task.contextNotes,
+        sourceNotes: byId("taskSourceNotes")?.value.trim() ?? task.sourceNotes,
+        contextMode: byId("taskPanel")?.querySelector("input[name='contextMode']:checked")?.value || task.contextMode || "work",
+        contextIncludes: Object.fromEntries(Array.from(byId("contextIncludeList")?.querySelectorAll("[data-context-include]") || [])
+          .map((input) => [input.dataset.contextInclude, input.checked]))
+      };
+      preview.textContent = buildTaskPackage(draftTask, byId("taskMessageInput")?.value.trim() || "");
+    }
+
     function renderTaskThread(task) {
       const messages = Array.isArray(task.messages) ? task.messages : [];
       const selectedModels = selectedTaskModels();
@@ -1540,12 +1745,14 @@
     }
 
     function setTaskPanelView(view) {
-      taskPanelView = view === "summary" ? "summary" : "task";
+      taskPanelView = ["task", "context", "summary"].includes(view) ? view : "task";
       byId("taskPaneTask").hidden = taskPanelView !== "task";
+      byId("taskPaneContext").hidden = taskPanelView !== "context";
       byId("taskPaneSummary").hidden = taskPanelView !== "summary";
       byId("taskPanel").querySelectorAll("[data-task-panel-view]").forEach((button) => {
         button.classList.toggle("active", button.dataset.taskPanelView === taskPanelView);
       });
+      renderTaskPackagePreview();
     }
 
     function refreshTaskPanel() {
@@ -1556,12 +1763,22 @@
       byId("taskPanelEditor").value = taskText(task);
       byId("taskSaveText").hidden = true;
       byId("taskSummary").value = task.summary || "";
+      byId("taskContextNotes").value = task.contextNotes || "";
+      byId("taskSourceNotes").value = task.sourceNotes || "";
+      byId("taskPanel").querySelectorAll("input[name='contextMode']").forEach((input) => {
+        input.checked = input.value === (task.contextMode || "work");
+      });
+      const includes = selectedContextIncludes(task);
+      byId("contextIncludeList").querySelectorAll("[data-context-include]").forEach((input) => {
+        input.checked = Boolean(includes[input.dataset.contextInclude]);
+      });
       const statusNode = byId("taskPanelStatus");
       statusNode.textContent = taskStatusLabels[status] || "Черновик";
       statusNode.className = `task-status ${status}`;
       renderTaskThread(task);
       renderSummaryResults(task);
       setTaskPanelView(taskPanelView);
+      renderTaskPackagePreview();
     }
 
     function openTaskPanel(project, parentProject, index) {
@@ -1591,6 +1808,26 @@
       });
       taskPanelContext = { project, parentProject, index };
       byId("taskSaveText").hidden = true;
+      refreshTaskPanel();
+    }
+
+    function saveTaskContext() {
+      if (!taskPanelContext) return;
+      const { project, parentProject, index } = taskPanelContext;
+      const mode = byId("taskPanel").querySelector("input[name='contextMode']:checked")?.value || "work";
+      const contextIncludes = {};
+      byId("contextIncludeList").querySelectorAll("[data-context-include]").forEach((input) => {
+        contextIncludes[input.dataset.contextInclude] = input.checked;
+      });
+      mutateOverviewState(project, parentProject, (draft) => {
+        const item = draft.todo[index];
+        if (!item) return;
+        item.contextNotes = byId("taskContextNotes").value.trim();
+        item.sourceNotes = byId("taskSourceNotes").value.trim();
+        item.contextMode = mode;
+        item.contextIncludes = contextIncludes;
+      });
+      taskPanelContext = { project, parentProject, index };
       refreshTaskPanel();
     }
 
@@ -1638,7 +1875,6 @@
         item.messages = [];
       });
       taskPanelContext = { project, parentProject, index };
-      if (applyToText) taskPanelView = "task";
       refreshTaskPanel();
     }
 
@@ -1666,20 +1902,31 @@
         return;
       }
       const { project, parentProject, index } = taskPanelContext;
+      const contextMode = byId("taskPanel").querySelector("input[name='contextMode']:checked")?.value || "work";
+      const contextIncludes = {};
+      byId("contextIncludeList").querySelectorAll("[data-context-include]").forEach((input) => {
+        contextIncludes[input.dataset.contextInclude] = input.checked;
+      });
       mutateOverviewState(project, parentProject, (draft) => {
         const item = draft.todo[index];
         if (!item) return;
+        item.contextNotes = byId("taskContextNotes").value.trim();
+        item.sourceNotes = byId("taskSourceNotes").value.trim();
+        item.contextMode = contextMode;
+        item.contextIncludes = contextIncludes;
+        const packageText = buildTaskPackage(item, text);
         item.messages = Array.isArray(item.messages) ? item.messages : [];
         item.messages.push({
           role: "user",
           text,
+          packageText,
           createdAt: new Date().toISOString()
         });
         models.forEach((model) => {
           item.messages.push({
             role: "agent",
             model,
-            text: `${model}: ожидает подключения реальной модели через Hermes/OpenRouter.`,
+            text: `${model}: контекстный пакет собран (${contextMode}). После подключения Hermes/OpenRouter сюда придет ответ модели.`,
             createdAt: new Date().toISOString()
           });
         });
@@ -2133,6 +2380,22 @@
     });
     byId("taskPanelVoice").addEventListener("click", () => startVoiceInput("taskMessageInput", "taskPanelVoice"));
     byId("taskAskModels").addEventListener("click", askSelectedModels);
+    byId("taskSaveContext").addEventListener("click", saveTaskContext);
+    byId("taskMessageInput").addEventListener("input", renderTaskPackagePreview);
+    byId("taskContextNotes").addEventListener("input", renderTaskPackagePreview);
+    byId("taskSourceNotes").addEventListener("input", renderTaskPackagePreview);
+    byId("taskPanel").querySelectorAll("input[name='contextMode']").forEach((input) => {
+      input.addEventListener("change", () => {
+        const preset = contextIncludesForMode(input.value);
+        byId("contextIncludeList").querySelectorAll("[data-context-include]").forEach((checkbox) => {
+          checkbox.checked = Boolean(preset[checkbox.dataset.contextInclude]);
+        });
+        renderTaskPackagePreview();
+      });
+    });
+    byId("contextIncludeList").querySelectorAll("[data-context-include]").forEach((input) => {
+      input.addEventListener("change", renderTaskPackagePreview);
+    });
     byId("taskThread").addEventListener("click", (event) => {
       const button = event.target.closest("[data-model-focus]");
       if (!button) return;
