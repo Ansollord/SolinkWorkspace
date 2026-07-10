@@ -928,6 +928,29 @@
     }
     .mode-card h3 { margin: 0 0 8px; font-size: 18px; }
     .mode-card p { margin: 0; color: var(--muted); line-height: 1.45; }
+    .model-table {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .model-row {
+      display: grid;
+      grid-template-columns: minmax(150px, 1fr) minmax(110px, .8fr) minmax(120px, .8fr) minmax(120px, .8fr);
+      gap: 8px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+      padding: 10px;
+    }
+    .model-row.header {
+      background: #fffaf0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .model-row strong { font-size: 14px; }
+    .model-row span { min-width: 0; }
     .timeline { display: grid; gap: 10px; }
     .event { border-left: 3px solid var(--line); padding-left: 10px; color: #403b33; }
     .event strong { display: block; margin-bottom: 2px; }
@@ -941,6 +964,7 @@
       .task-panel-main { grid-template-columns: 1fr; }
       .context-layout { grid-template-columns: 1fr; }
       .quick-layout { grid-template-columns: 1fr; }
+      .model-row { grid-template-columns: 1fr 1fr; }
       .thread-list.focused { grid-template-columns: minmax(320px, var(--focused-model-width, 58%)) 8px minmax(220px, 1fr); }
     }
     @media (max-width: 760px) {
@@ -1385,7 +1409,8 @@
       { id: "inbox", title: "Inbox", badge: "IN", description: "Входящие мысли, покупки, поручения и идеи до распределения." },
       { id: "catalog", title: "Catalog", badge: "CA", description: "Долговременная память: карточки, источники, контексты и архивы." },
       { id: "agents", title: "Agents", badge: "AG", description: "Очередь задач для моделей, Hermes, OpenRouter и локальных агентов." },
-      { id: "settings", title: "Settings", badge: "SE", description: "Модели, провайдеры, лимиты, ключи и правила отправки." }
+      { id: "models", title: "Models", badge: "MO", description: "Каталог подключенных моделей: провайдеры, стоимость, лимиты, роли и доступность." },
+      { id: "settings", title: "Settings", badge: "SE", description: "Внешний вид, шрифты, темы, мобильный режим и поведение интерфейса." }
     ];
     const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
       "&": "&amp;",
@@ -2570,9 +2595,52 @@
       byId("quickVoice").addEventListener("click", () => startVoiceInput("quickAskInput", "quickVoice"));
     }
 
+    function renderModelsPage() {
+      byId("projectSectionTitle").textContent = "Models";
+      byId("projectFilters").style.display = "none";
+      const rows = [
+        ["ChatGPT", "API / app", "smart, code", "цена/API"],
+        ["Gemini", "API", "research, long", "цена/API"],
+        ["Grok", "API", "fast, alternate", "цена/API"],
+        ["Hermes", "local gateway", "router, agent", "локально"],
+        ["Local models", "scan", "offline, cheap", "железо"]
+      ];
+      byId("projectCards").innerHTML = `
+        <article class="project-card project-overview">
+          <div class="project-head">
+            <div class="overview-lead">
+              <h3>Models</h3>
+              <p>Здесь будет список подключенных моделей и провайдеров. Пульт сможет брать модели напрямую через API, через общий шлюз OpenRouter или через локальный Hermes, который прячет ключи и выбирает маршрут.</p>
+            </div>
+            <span class="status agent">Слой подключения</span>
+          </div>
+          <div class="mode-grid">
+            <section class="mode-card"><h3>API</h3><p>Облачные модели подключаются ключом провайдера. Пульт не должен хранить ключи в HTML: лучше отдавать запросы локальному Hermes/Command Service.</p></section>
+            <section class="mode-card"><h3>Scan</h3><p>Локальный сервис сможет спросить у провайдеров список доступных моделей и просканировать локальные движки вроде Ollama/LM Studio.</p></section>
+            <section class="mode-card"><h3>Цена</h3><p>Для каждой модели нужны роль, примерная цена, контекстное окно, скорость, качество и текущая доступность.</p></section>
+          </div>
+          <div class="model-table">
+            <div class="model-row header"><span>Модель</span><span>Источник</span><span>Роль</span><span>Стоимость</span></div>
+            ${rows.map(([name, source, role, price]) => `
+              <div class="model-row">
+                <strong>${escapeHtml(name)}</strong>
+                <span>${escapeHtml(source)}</span>
+                <span>${escapeHtml(role)}</span>
+                <span>${escapeHtml(price)}</span>
+              </div>
+            `).join("")}
+          </div>
+        </article>
+      `;
+    }
+
     function renderModePage(modeId) {
       if (modeId === "quick") {
         renderQuickAsk();
+        return;
+      }
+      if (modeId === "models") {
+        renderModelsPage();
         return;
       }
       const mode = workspaceModes.find((item) => item.id === modeId) || workspaceModes[0];
@@ -2597,10 +2665,19 @@
           ["Пакеты", "Состав контекста, режим, вес, источники и критерии готовности."],
           ["Исполнение", "Будущий безопасный запуск через Hermes/OpenRouter и Command Service."]
         ],
+        models: [
+          ["Подключенные", "Список доступных моделей: ChatGPT, Gemini, Grok, локальные LLM и экспериментальные провайдеры."],
+          ["Провайдеры", "API-ключи и шлюзы: напрямую к сервису, через OpenRouter или через локальный Hermes."],
+          ["Стоимость и лимиты", "Цена запроса, доступность, остаток лимитов, скорость и размер контекстного окна."],
+          ["Сканирование", "Обнаружение локальных моделей и запрос списка моделей у подключенных API."],
+          ["Роли", "Быстрая, умная, кодовая, исследовательская, дешевая или экспериментальная модель."],
+          ["Маршрутизация", "Правила: какую модель выбирать для Quick Ask, задач, агентов и глубокого разбора."]
+        ],
         settings: [
-          ["Модели", "Список провайдеров, доступность, лимиты и роли."],
-          ["Безопасность", "Ключи, локальный сервер, Tailscale и права команд."],
-          ["Интерфейс", "Мобильный режим, быстрые кнопки и правила контекстных пакетов."]
+          ["Тема", "Светлая, темная, контрастная и будущие визуальные профили."],
+          ["Шрифты", "Размеры текста, плотность интерфейса и комфорт чтения на телефоне."],
+          ["Интерфейс", "Мобильный режим, быстрые кнопки, раскладка панелей и поведение меню."],
+          ["Безопасность", "Локальный сервер, Tailscale, подтверждения опасных действий и права команд."]
         ]
       };
       byId("projectSectionTitle").textContent = mode.title;
