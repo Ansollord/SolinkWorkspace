@@ -578,7 +578,7 @@
     }
     .thread-list {
       display: grid;
-      grid-template-columns: repeat(var(--thread-columns, 4), minmax(0, 1fr));
+      grid-template-columns: var(--thread-template, repeat(var(--thread-columns, 4), minmax(0, 1fr)));
       align-content: start;
       gap: 10px;
       min-height: 0;
@@ -621,6 +621,10 @@
       grid-template-columns: minmax(360px, var(--focused-model-width, 60%)) 8px minmax(240px, 1fr);
       align-items: start;
       column-gap: 8px;
+    }
+    .thread-list .thread-resizer {
+      align-self: stretch;
+      min-height: 180px;
     }
     .model-thread-stack {
       display: grid;
@@ -1160,6 +1164,38 @@
       if (name === "focusedModel") root.style.setProperty("--focused-model-width", `${value}%`);
     }
 
+    function modelWidthKey(count) {
+      return `threadModelWidths${count}`;
+    }
+
+    function readModelWidths(count) {
+      const sizes = readLayoutSizes();
+      const saved = sizes[modelWidthKey(count)];
+      if (Array.isArray(saved) && saved.length === count && saved.every(Number.isFinite)) {
+        const total = saved.reduce((sum, value) => sum + value, 0);
+        if (total > 0) return saved.map((value) => (value / total) * 100);
+      }
+      return Array.from({ length: count }, () => 100 / Math.max(count, 1));
+    }
+
+    function saveModelWidths(widths) {
+      const sizes = readLayoutSizes();
+      sizes[modelWidthKey(widths.length)] = widths;
+      localStorage.setItem("solinkLayoutSizes", JSON.stringify(sizes));
+    }
+
+    function applyModelWidths(thread, count) {
+      if (!thread || count <= 1) {
+        thread?.style.removeProperty("--thread-template");
+        return;
+      }
+      const widths = readModelWidths(count);
+      const template = widths
+        .map((width, index) => `${index ? "8px " : ""}minmax(180px, ${Math.max(width, 8).toFixed(2)}fr)`)
+        .join(" ");
+      thread.style.setProperty("--thread-template", template);
+    }
+
     function restoreResizableLayout() {
       const sizes = readLayoutSizes();
       if (Number.isFinite(sizes.sidebar)) setLayoutSize("sidebar", sizes.sidebar);
@@ -1175,13 +1211,18 @@
         const type = handle.dataset.resizeHandle;
         const layout = document.querySelector(".layout");
         const taskBody = byId("taskPanel")?.hidden ? null : byId("taskPanel")?.querySelector(".task-panel-body");
-        const thread = type === "focused-model" ? byId("taskThread") : null;
+        const thread = (type === "focused-model" || type === "model-column") ? byId("taskThread") : null;
         const layoutRect = layout?.getBoundingClientRect();
         const taskRect = taskBody?.getBoundingClientRect();
         const threadRect = thread?.getBoundingClientRect();
+        const modelCount = Number(handle.dataset.modelCount || 0);
+        const columnIndex = Number(handle.dataset.columnIndex || -1);
+        const startX = event.clientX;
+        const startWidths = modelCount > 1 ? readModelWidths(modelCount) : [];
         if ((type === "sidebar" || type === "rightbar") && !layoutRect) return;
         if (type === "task-top" && !taskRect) return;
         if (type === "focused-model" && !threadRect) return;
+        if (type === "model-column" && (!threadRect || modelCount < 2 || columnIndex < 0)) return;
 
         event.preventDefault();
         handle.classList.add("dragging");
@@ -1208,6 +1249,17 @@
           if (type === "focused-model") {
             const value = clamp(((moveEvent.clientX - threadRect.left) / threadRect.width) * 100, 42, 74);
             setLayoutSize("focusedModel", Math.round(value));
+            return;
+          }
+          if (type === "model-column") {
+            const minWidth = 10;
+            const delta = ((moveEvent.clientX - startX) / threadRect.width) * 100;
+            const nextWidths = [...startWidths];
+            const pair = startWidths[columnIndex] + startWidths[columnIndex + 1];
+            nextWidths[columnIndex] = clamp(startWidths[columnIndex] + delta, minWidth, pair - minWidth);
+            nextWidths[columnIndex + 1] = pair - nextWidths[columnIndex];
+            saveModelWidths(nextWidths);
+            applyModelWidths(thread, modelCount);
           }
         };
 
@@ -1393,6 +1445,7 @@
       if (!models.includes(focusedTaskModel)) focusedTaskModel = "";
       thread.style.setProperty("--thread-columns", Math.max(models.length, 1));
       thread.classList.toggle("focused", Boolean(focusedTaskModel));
+      applyModelWidths(thread, focusedTaskModel ? 1 : models.length);
       if (!messages.length || !models.length) {
         thread.innerHTML = `<div class="thread-message"><p>Здесь появится рабочий разговор по задаче.</p></div>`;
         return;
@@ -1438,7 +1491,10 @@
           <div class="model-thread-stack">
             ${models.filter((model) => model !== focusedTaskModel).map(renderModelThread).join("")}
           </div>`
-        : models.map(renderModelThread).join("");
+        : models.map((model, index) => `
+          ${index ? `<div class="resize-handle vertical thread-resizer" data-resize-handle="model-column" data-column-index="${index - 1}" data-model-count="${models.length}" role="separator" aria-label="Resize model columns"></div>` : ""}
+          ${renderModelThread(model)}
+        `).join("");
       requestAnimationFrame(() => {
         thread.querySelectorAll(".model-thread-body").forEach((column) => {
           column.scrollTop = column.scrollHeight;
