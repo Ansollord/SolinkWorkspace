@@ -1855,9 +1855,9 @@
       const total = state.todo.length + state.done.length;
       const progress = total ? Math.round((state.done.length / total) * 100) : 0;
       const todo = state.todo.map((item, index) => `
-        <li draggable="true" data-task-index="${index}">
+        <li data-task-index="${index}">
           <div class="task-item">
-            <span class="task-grip" role="button" tabindex="0" aria-label="Переместить задачу">
+            <span class="task-grip" draggable="true" role="button" tabindex="0" aria-label="Переместить задачу">
               <button class="task-move" type="button" data-task-action="up" data-task-index="${index}" aria-label="Выше">↑</button>
               <button class="task-move" type="button" data-task-action="down" data-task-index="${index}" aria-label="Ниже">↓</button>
             </span>
@@ -1943,8 +1943,15 @@
       byId("projectCards").querySelector("[data-overview-action='add-task']")?.addEventListener("click", () => {
         openTaskDialog(project, parentProject, "add");
       });
+      byId("projectCards").querySelector(".task-list")?.addEventListener("click", (event) => {
+        if (event.target.closest(".task-grip, .task-actions, .task-menu")) return;
+        const row = event.target.closest("[data-task-index]");
+        if (!row) return;
+        openTaskPanel(project, parentProject, Number(row.dataset.taskIndex));
+      });
       byId("projectCards").querySelectorAll("[data-task-action]").forEach((button) => {
-        button.addEventListener("click", () => {
+        button.addEventListener("click", (event) => {
+          event.stopPropagation();
           const index = Number(button.dataset.taskIndex);
           const action = button.dataset.taskAction;
           if (action === "menu") {
@@ -1994,18 +2001,24 @@
       });
       const taskList = byId("projectCards").querySelector(".task-list");
       let dragIndex = -1;
-      taskList?.querySelectorAll("[data-task-index]").forEach((row) => {
-        row.addEventListener("dragstart", (event) => {
+      taskList?.querySelectorAll(".task-grip").forEach((grip) => {
+        grip.addEventListener("dragstart", (event) => {
+          const row = grip.closest("[data-task-index]");
+          if (!row) return;
           dragIndex = Number(row.dataset.taskIndex);
           row.classList.add("dragging");
           taskList.classList.add("drag-over");
           event.dataTransfer.effectAllowed = "move";
         });
-        row.addEventListener("dragend", () => {
+        grip.addEventListener("dragend", () => {
+          const row = grip.closest("[data-task-index]");
+          if (!row) return;
           row.classList.remove("dragging");
           taskList.classList.remove("drag-over");
           dragIndex = -1;
         });
+      });
+      taskList?.querySelectorAll("[data-task-index]").forEach((row) => {
         row.addEventListener("dragover", (event) => {
           event.preventDefault();
           event.dataTransfer.dropEffect = "move";
