@@ -637,6 +637,54 @@
       font-weight: 700;
     }
     .context-checks input { accent-color: var(--accent); }
+    .package-meter {
+      display: grid;
+      gap: 7px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffaf0;
+      padding: 10px;
+    }
+    .package-meter-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .package-meter-head strong { font-size: 13px; }
+    .package-badge {
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .package-badge.empty { background: #ece6da; color: #695f51; }
+    .package-badge.light { background: #dff0ec; color: #0f5f55; }
+    .package-badge.normal { background: #dceafb; color: var(--blue); }
+    .package-badge.heavy { background: #f7ebcc; color: #8a5a07; }
+    .package-badge.overload { background: #f2d8d2; color: #873d2d; }
+    .package-bar {
+      height: 8px;
+      border-radius: 999px;
+      background: #ece6da;
+      overflow: hidden;
+    }
+    .package-bar-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--accent);
+    }
+    .package-meter.heavy .package-bar-fill { background: #b97812; }
+    .package-meter.overload .package-bar-fill { background: #b5523c; }
+    .package-meter.empty .package-bar-fill { background: #9f9485; }
+    .package-hint {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
     .task-panel-pane.discussion { min-height: 0; margin-top: 12px; }
     .discussion-composer {
       display: grid;
@@ -986,6 +1034,14 @@
                 <label><input type="checkbox" data-context-include="project" checked>Контекст проекта</label>
                 <label><input type="checkbox" data-context-include="done">Что уже сделано</label>
                 <label><input type="checkbox" data-context-include="sources" checked>Источники и ограничения</label>
+              </div>
+              <div class="package-meter normal" id="packageMeter">
+                <div class="package-meter-head">
+                  <strong id="packageMeterTitle">Вес пакета: нормальный</strong>
+                  <span class="package-badge normal" id="packageMeterBadge">~0 токенов</span>
+                </div>
+                <div class="package-bar"><div class="package-bar-fill" id="packageMeterFill"></div></div>
+                <p class="package-hint" id="packageMeterHint">Пакет будет оценен после сборки контекста.</p>
               </div>
               <pre class="package-preview" id="taskPackagePreview"></pre>
             </section>
@@ -1649,6 +1705,66 @@
       return sections.join("\n\n---\n\n");
     }
 
+    function estimatePackageWeight(text) {
+      const chars = String(text || "").length;
+      const tokens = Math.ceil(chars / 3.6);
+      if (chars < 900) {
+        return {
+          level: "empty",
+          label: "мало",
+          tokens,
+          percent: Math.min(100, Math.round((chars / 900) * 100)),
+          hint: "Контекста почти нет. Для осмысленного ответа лучше добавить рамку задачи или рабочий итог."
+        };
+      }
+      if (chars < 4000) {
+        return {
+          level: "light",
+          label: "легкий",
+          tokens,
+          percent: Math.round((chars / 4000) * 100),
+          hint: "Легкий пакет: хорошо для быстрых вопросов и уточнений."
+        };
+      }
+      if (chars < 16000) {
+        return {
+          level: "normal",
+          label: "нормальный",
+          tokens,
+          percent: Math.round((chars / 16000) * 100),
+          hint: "Нормальный пакет: сбалансирован для рабочей модели без лишнего шума."
+        };
+      }
+      if (chars < 60000) {
+        return {
+          level: "heavy",
+          label: "тяжелый",
+          tokens,
+          percent: Math.round((chars / 60000) * 100),
+          hint: "Тяжелый пакет. Лучше проверить, нужен ли полный список сделанного и последние реплики."
+        };
+      }
+      return {
+        level: "overload",
+        label: "перегруз",
+        tokens,
+        percent: 100,
+        hint: "Пакет слишком большой. Нужна выжимка вместо архива или более точный выбор источников."
+      };
+    }
+
+    function renderPackageMeter(packageText) {
+      const meter = byId("packageMeter");
+      if (!meter) return;
+      const weight = estimatePackageWeight(packageText);
+      meter.className = `package-meter ${weight.level}`;
+      byId("packageMeterTitle").textContent = `Вес пакета: ${weight.label}`;
+      byId("packageMeterBadge").className = `package-badge ${weight.level}`;
+      byId("packageMeterBadge").textContent = `~${weight.tokens.toLocaleString("ru-RU")} токенов`;
+      byId("packageMeterFill").style.width = `${clamp(weight.percent, 4, 100)}%`;
+      byId("packageMeterHint").textContent = weight.hint;
+    }
+
     function renderTaskPackagePreview() {
       const task = currentPanelTask();
       const preview = byId("taskPackagePreview");
@@ -1661,7 +1777,9 @@
         contextIncludes: Object.fromEntries(Array.from(byId("contextIncludeList")?.querySelectorAll("[data-context-include]") || [])
           .map((input) => [input.dataset.contextInclude, input.checked]))
       };
-      preview.textContent = buildTaskPackage(draftTask, byId("taskMessageInput")?.value.trim() || "");
+      const packageText = buildTaskPackage(draftTask, byId("taskMessageInput")?.value.trim() || "");
+      preview.textContent = packageText;
+      renderPackageMeter(packageText);
     }
 
     function renderTaskThread(task) {
