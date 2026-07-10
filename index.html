@@ -244,8 +244,8 @@
     .overview-lead p { margin: 0; color: #39352d; line-height: 1.5; }
     .overview-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(260px, 1fr));
-      gap: 12px;
+      grid-template-columns: minmax(280px, var(--overview-main-width, 62%)) 8px minmax(260px, 1fr);
+      gap: 8px;
     }
     .overview-column {
       border: 1px solid var(--line);
@@ -750,6 +750,7 @@
       .resize-handle[data-resize-handle="rightbar"] { display: none; }
       .hero { grid-template-columns: 1fr; }
       .overview-grid, .overview-components { grid-template-columns: 1fr; }
+      .overview-grid > .resize-handle { display: none; }
       .task-panel-main { grid-template-columns: 1fr; }
       .thread-list.focused { grid-template-columns: minmax(320px, var(--focused-model-width, 58%)) 8px minmax(220px, 1fr); }
     }
@@ -1162,6 +1163,7 @@
       if (name === "rightbar") root.style.setProperty("--rightbar-width", `${value}px`);
       if (name === "taskTop") root.style.setProperty("--task-top-height", `${value}px`);
       if (name === "focusedModel") root.style.setProperty("--focused-model-width", `${value}%`);
+      if (name === "overviewMain") root.style.setProperty("--overview-main-width", `${value}%`);
     }
 
     function modelWidthKey(count) {
@@ -1202,6 +1204,7 @@
       if (Number.isFinite(sizes.rightbar)) setLayoutSize("rightbar", sizes.rightbar);
       if (Number.isFinite(sizes.taskTop)) setLayoutSize("taskTop", sizes.taskTop);
       if (Number.isFinite(sizes.focusedModel)) setLayoutSize("focusedModel", sizes.focusedModel);
+      if (Number.isFinite(sizes.overviewMain)) setLayoutSize("overviewMain", sizes.overviewMain);
     }
 
     function initResizableLayout() {
@@ -1212,9 +1215,11 @@
         const layout = document.querySelector(".layout");
         const taskBody = byId("taskPanel")?.hidden ? null : byId("taskPanel")?.querySelector(".task-panel-body");
         const thread = (type === "focused-model" || type === "model-column") ? byId("taskThread") : null;
+        const overviewGrid = type === "overview-main" ? handle.closest(".overview-grid") : null;
         const layoutRect = layout?.getBoundingClientRect();
         const taskRect = taskBody?.getBoundingClientRect();
         const threadRect = thread?.getBoundingClientRect();
+        const overviewRect = overviewGrid?.getBoundingClientRect();
         const modelCount = Number(handle.dataset.modelCount || 0);
         const columnIndex = Number(handle.dataset.columnIndex || -1);
         const startX = event.clientX;
@@ -1223,6 +1228,7 @@
         if (type === "task-top" && !taskRect) return;
         if (type === "focused-model" && !threadRect) return;
         if (type === "model-column" && (!threadRect || modelCount < 2 || columnIndex < 0)) return;
+        if (type === "overview-main" && !overviewRect) return;
 
         event.preventDefault();
         handle.classList.add("dragging");
@@ -1251,6 +1257,11 @@
             setLayoutSize("focusedModel", Math.round(value));
             return;
           }
+          if (type === "overview-main") {
+            const value = clamp(((moveEvent.clientX - overviewRect.left) / overviewRect.width) * 100, 36, 78);
+            setLayoutSize("overviewMain", Math.round(value));
+            return;
+          }
           if (type === "model-column") {
             const minWidth = 10;
             const delta = ((moveEvent.clientX - startX) / threadRect.width) * 100;
@@ -1270,10 +1281,12 @@
           const rightbar = parseFloat(styles.getPropertyValue("--rightbar-width"));
           const taskTop = parseFloat(styles.getPropertyValue("--task-top-height"));
           const focusedModel = parseFloat(styles.getPropertyValue("--focused-model-width"));
+          const overviewMain = parseFloat(styles.getPropertyValue("--overview-main-width"));
           if (Number.isFinite(sidebar)) saveLayoutSize("sidebar", Math.round(sidebar));
           if (Number.isFinite(rightbar)) saveLayoutSize("rightbar", Math.round(rightbar));
           if (Number.isFinite(taskTop)) saveLayoutSize("taskTop", Math.round(taskTop));
           if (Number.isFinite(focusedModel)) saveLayoutSize("focusedModel", Math.round(focusedModel));
+          if (Number.isFinite(overviewMain)) saveLayoutSize("overviewMain", Math.round(overviewMain));
           window.removeEventListener("pointermove", move);
           window.removeEventListener("pointerup", stop);
           window.removeEventListener("pointercancel", stop);
@@ -1314,13 +1327,25 @@
       return `task-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     }
 
+    function isDemoMessage(message) {
+      const text = String(message?.text || "");
+      return text.includes("Семь раз отмерь, один раз отрежь")
+        || text.includes("Демонстрационный ответ модели")
+        || text.includes("Исходная реплика:")
+        || text.includes("сначала проверяем форму обсуждения, потом подключаем настоящие модели")
+        || text.includes("Разложил бы это как рабочую задачу")
+        || text.includes("Я бы посмотрел на это шире")
+        || text.includes("Коротко: не усложнять")
+        || text.includes("Маршрут для агента: принять формулировку");
+    }
+
     function makeTask(value, status = "draft") {
       if (typeof value === "object" && value && "text" in value) {
         return {
           id: value.id || createTaskId(),
           text: String(value.text || ""),
           status: value.status || status,
-          messages: Array.isArray(value.messages) ? value.messages : [],
+          messages: Array.isArray(value.messages) ? value.messages.filter((message) => !isDemoMessage(message)) : [],
           messageArchive: Array.isArray(value.messageArchive) ? value.messageArchive : [],
           summaryResponses: Array.isArray(value.summaryResponses) ? value.summaryResponses : [],
           summary: String(value.summary || "")
@@ -1627,20 +1652,14 @@
         .map((item) => item.value);
     }
 
-    function demoModelAnswer(model, text) {
-      const answers = {
-        ChatGPT: "Разложил бы это как рабочую задачу: сначала уточнить цель, затем зафиксировать минимальный результат и критерий готовности.",
-        Gemini: "Я бы посмотрел на это шире: какие данные уже есть, где слабое место процесса и какой следующий шаг даст максимум ясности.",
-        Grok: "Коротко: не усложнять. Берем один проверяемый шаг, делаем его видимым в интерфейсе и только потом подключаем автоматику.",
-        Hermes: "Маршрут для агента: принять формулировку, выделить действие, результат, входные данные и вернуть структурированный черновик."
-      };
-      return `${model}: ${answers[model] || "Демонстрационный ответ модели."} Исходная реплика: «${text}»`;
-    }
-
     function askSelectedModels() {
       if (!taskPanelContext) return;
-      const text = normalizeTaskText(byId("taskMessageInput").value)
-        || "Семь раз отмерь, один раз отрежь: сначала проверяем форму обсуждения, потом подключаем настоящие модели.";
+      const text = normalizeTaskText(byId("taskMessageInput").value);
+      if (!text) {
+        alert("Сначала введи или надиктуй реплику.");
+        byId("taskMessageInput").focus();
+        return;
+      }
       const models = selectedTaskModels();
       if (!models.length) {
         alert("Выбери хотя бы одну модель.");
@@ -1660,7 +1679,7 @@
           item.messages.push({
             role: "agent",
             model,
-            text: demoModelAnswer(model, text),
+            text: `${model}: ожидает подключения реальной модели через Hermes/OpenRouter.`,
             createdAt: new Date().toISOString()
           });
         });
@@ -1887,6 +1906,7 @@
               </div>
               <ol class="task-list">${todo}</ol>
             </section>
+            <div class="resize-handle vertical" data-resize-handle="overview-main" role="separator" aria-label="Resize overview columns"></div>
             <section class="overview-column">
               ${state.showDone ? `
                 <h4>${escapeHtml(overview.doneTitle || "\u0427\u0442\u043e \u0443\u0436\u0435 \u0441\u0434\u0435\u043b\u0430\u043d\u043e")}</h4>
