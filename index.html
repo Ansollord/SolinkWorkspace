@@ -270,6 +270,9 @@
       grid-template-columns: minmax(280px, var(--overview-main-width, 62%)) 8px minmax(260px, 1fr);
       gap: 8px;
     }
+    .hero.home-dashboard { display: block; }
+    .hero.home-dashboard .mission { display: none; }
+    .hero.home-dashboard .telemetry { grid-template-columns: repeat(4, minmax(120px, 1fr)); }
     .overview-column {
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -962,6 +965,25 @@
     .theme-swatches { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; height: 34px; overflow: hidden; border: 1px solid rgba(0, 0, 0, .08); border-radius: 6px; }
     .theme-swatches span { min-width: 0; }
     .theme-note { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+    .home-grid { display: grid; grid-template-columns: minmax(360px, 1.25fr) minmax(280px, .75fr); gap: 12px; }
+    .dashboard-widget { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 14px; box-shadow: var(--shadow); }
+    .widget-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; margin-bottom: 12px; }
+    .widget-head h3 { margin: 0; font-size: 18px; }
+    .widget-head p { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+    .weather-now { display: grid; grid-template-columns: auto 1fr repeat(2, minmax(90px, auto)); gap: 14px; align-items: center; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-soft); }
+    .weather-icon { font-size: 34px; line-height: 1; }
+    .weather-temp { font-size: 30px; line-height: 1; font-weight: 800; }
+    .weather-detail strong, .rate-value { display: block; font-size: 18px; }
+    .weather-detail span, .rate-label, .forecast-day span { color: var(--muted); font-size: 12px; }
+    .forecast-week { display: grid; grid-template-columns: repeat(7, minmax(72px, 1fr)); gap: 7px; margin-top: 10px; overflow-x: auto; }
+    .forecast-day { min-width: 72px; padding: 9px 7px; border: 1px solid var(--line); border-radius: 7px; text-align: center; background: var(--surface); }
+    .forecast-day strong { display: block; margin: 4px 0; }
+    .forecast-day .forecast-icon { font-size: 20px; color: var(--ink); }
+    .rates-list { display: grid; gap: 8px; }
+    .rate-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-soft); }
+    .widget-loading, .widget-error { color: var(--muted); padding: 16px 0; }
+    .widget-error { color: #9a5d55; }
+    .source-link { color: var(--accent); font-size: 12px; }
     .model-table {
       display: grid;
       gap: 8px;
@@ -1007,6 +1029,7 @@
       .task-panel-main { grid-template-columns: 1fr; }
       .context-layout { grid-template-columns: 1fr; }
       .quick-layout { grid-template-columns: 1fr; }
+      .home-grid { grid-template-columns: 1fr; }
       .model-row { grid-template-columns: 1fr 1fr; }
       .thread-list.focused { grid-template-columns: minmax(320px, var(--focused-model-width, 58%)) 8px minmax(220px, 1fr); }
     }
@@ -1025,6 +1048,9 @@
       .mission { padding: 14px; }
       .mission h2 { font-size: 20px; }
       .telemetry { grid-template-columns: 1fr; }
+      .hero.home-dashboard .telemetry { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .weather-now { grid-template-columns: auto 1fr; }
+      .weather-detail { padding-top: 8px; border-top: 1px solid var(--line); }
       .cards { grid-template-columns: minmax(0, 1fr); }
       .project-card { min-height: 0; }
       .project-head { flex-wrap: wrap; }
@@ -2745,6 +2771,120 @@
       });
     }
 
+    function dashboardStats(projects) {
+      let todo = 0;
+      let archive = 0;
+      projects.forEach((project) => {
+        if (project.overview) {
+          const state = overviewState(project);
+          todo += state.todo.length;
+          archive += state.archive.length;
+        }
+        (project.components || []).forEach((component) => {
+          if (!component.overview) return;
+          const state = overviewState(component, project);
+          todo += state.todo.length;
+          archive += state.archive.length;
+        });
+      });
+      return [
+        { value: String(todo), label: "нереализованных задач" },
+        { value: String(projects.filter((item) => item.category === "paused").length), label: "на паузе" },
+        { value: String(projects.filter((item) => item.category === "ideas").length), label: "идей" },
+        { value: String(archive + projects.filter((item) => item.category === "archive").length), label: "в архиве" }
+      ];
+    }
+
+    function weatherView(code) {
+      if (code === 0) return ["Ясно", "☀"];
+      if ([1, 2].includes(code)) return ["Малооблачно", "◐"];
+      if (code === 3) return ["Облачно", "☁"];
+      if ([45, 48].includes(code)) return ["Туман", "≋"];
+      if ([51, 53, 55, 56, 57].includes(code)) return ["Морось", "☂"];
+      if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return ["Дождь", "☂"];
+      if ([71, 73, 75, 77, 85, 86].includes(code)) return ["Снег", "❄"];
+      if ([95, 96, 99].includes(code)) return ["Гроза", "ϟ"];
+      return ["Переменная погода", "○"];
+    }
+
+    function formatTemperature(value) {
+      const rounded = Math.round(Number(value));
+      return `${rounded > 0 ? "+" : ""}${rounded}°`;
+    }
+
+    async function loadMoscowWeather() {
+      const target = byId("weatherContent");
+      if (!target) return;
+      try {
+        const url = "https://api.open-meteo.com/v1/forecast?latitude=55.7558&longitude=37.6173&timezone=Europe%2FMoscow&forecast_days=7&hourly=temperature_2m,apparent_temperature,precipitation_probability,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max";
+        const response = await fetch(url, { cache: "no-store" });
+        if (!response.ok) throw new Error("weather unavailable");
+        const data = await response.json();
+        const today = data.daily.time[0];
+        const noonIndex = Math.max(0, data.hourly.time.indexOf(`${today}T12:00`));
+        const [condition, icon] = weatherView(data.hourly.weather_code[noonIndex]);
+        const weekdays = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"];
+        target.innerHTML = `
+          <div class="weather-now">
+            <div class="weather-icon">${icon}</div>
+            <div><div class="weather-temp">${formatTemperature(data.hourly.temperature_2m[noonIndex])}</div><div class="small">${condition}, 12:00</div></div>
+            <div class="weather-detail"><strong>${formatTemperature(data.hourly.apparent_temperature[noonIndex])}</strong><span>ощущается</span></div>
+            <div class="weather-detail"><strong>${Math.round(data.hourly.wind_speed_10m[noonIndex])} км/ч</strong><span>ветер · дождь ${Math.round(data.hourly.precipitation_probability[noonIndex])}%</span></div>
+          </div>
+          <div class="forecast-week">
+            ${data.daily.time.map((date, index) => {
+              const [label, dayIcon] = weatherView(data.daily.weather_code[index]);
+              const day = index === 0 ? "сегодня" : weekdays[new Date(`${date}T12:00:00`).getDay()];
+              return `<div class="forecast-day" title="${escapeHtml(label)}"><span>${day}</span><div class="forecast-icon">${dayIcon}</div><strong>${formatTemperature(data.daily.temperature_2m_max[index])} / ${formatTemperature(data.daily.temperature_2m_min[index])}</strong><span>дождь ${Math.round(data.daily.precipitation_probability_max[index] || 0)}%</span></div>`;
+            }).join("")}
+          </div>
+        `;
+      } catch {
+        if (byId("weatherContent")) byId("weatherContent").innerHTML = '<div class="widget-error">Не удалось получить прогноз. Проверим соединение при следующем открытии.</div>';
+      }
+    }
+
+    async function loadCurrencyRates() {
+      const target = byId("ratesContent");
+      if (!target) return;
+      try {
+        const response = await fetch("https://www.cbr-xml-daily.ru/daily_json.js", { cache: "no-store" });
+        if (!response.ok) throw new Error("rates unavailable");
+        const data = await response.json();
+        const usd = data.Valute.USD.Value / data.Valute.USD.Nominal;
+        const eur = data.Valute.EUR.Value / data.Valute.EUR.Nominal;
+        const rows = [
+          ["USD / RUB", usd.toFixed(2)],
+          ["EUR / RUB", eur.toFixed(2)],
+          ["EUR / USD", (eur / usd).toFixed(4)]
+        ];
+        target.innerHTML = `<div class="rates-list">${rows.map(([label, value]) => `<div class="rate-row"><span class="rate-label">${label}</span><strong class="rate-value">${value}</strong></div>`).join("")}</div>`;
+      } catch {
+        if (byId("ratesContent")) byId("ratesContent").innerHTML = '<div class="widget-error">Курсы временно недоступны.</div>';
+      }
+    }
+
+    function renderHomeDashboard(projects) {
+      document.querySelector(".hero")?.classList.add("home-dashboard");
+      renderMetrics(dashboardStats(projects));
+      byId("projectSectionTitle").textContent = "Сегодня";
+      byId("projectFilters").style.display = "none";
+      byId("projectCards").innerHTML = `
+        <div class="home-grid">
+          <section class="dashboard-widget">
+            <div class="widget-head"><div><h3>Москва</h3><p>Сегодня в 12:00 и прогноз на семь дней</p></div><a class="source-link" href="https://open-meteo.com/" target="_blank" rel="noreferrer">погода</a></div>
+            <div id="weatherContent" class="widget-loading">Получаю прогноз…</div>
+          </section>
+          <section class="dashboard-widget">
+            <div class="widget-head"><div><h3>Курсы валют</h3><p>Рубли за единицу валюты</p></div><a class="source-link" href="https://www.cbr.ru/currency_base/daily/" target="_blank" rel="noreferrer">ЦБ РФ</a></div>
+            <div id="ratesContent" class="widget-loading">Получаю курсы…</div>
+          </section>
+        </div>
+      `;
+      loadMoscowWeather();
+      loadCurrencyRates();
+    }
+
     function renderModePage(modeId) {
       if (modeId === "quick") {
         renderQuickAsk();
@@ -2821,6 +2961,11 @@
     function renderCards(projects) {
       const parent = selectedProject(currentData.projects || []);
       const component = selectedComponent(parent);
+      document.querySelector(".hero")?.classList.remove("home-dashboard");
+      if (!parent && selectedModeId === "home") {
+        renderHomeDashboard(currentData.projects || []);
+        return;
+      }
       if (!parent && selectedModeId !== "home" && selectedModeId !== "projects") {
         renderModePage(selectedModeId);
         return;
